@@ -8,6 +8,8 @@ const TAB_LABELS = {
   pizze:      "🍕 Pizze",
   colazione:  "☕ Colazione",
   cicchetti:  "🍢 Cicchetti",
+  panini:     "🥖 Panini",
+  aperitivo:  "🍸 Aperitivo",
   gelati:     "🍦 Gelati",
   granite:    "🧊 Granite",
   cioccolato: "🍫 Cioccolato",
@@ -17,7 +19,7 @@ const TAB_LABELS = {
   bevande:    "🥤 Bevande",
   vini:       "🍷 Vini",
   birre:      "🍺 Birre",
-  bibite:     "🥤 Bibite",
+  bibite:     "🥤 Bibite & Caffè",
 };
 
 // ── DRINK CLASSES ──
@@ -183,5 +185,5 @@ document.getElementById("searchInput").addEventListener("input", applyFilters);
 document.addEventListener("DOMContentLoaded", () => {
   renderCards(RESTAURANTS);
   initMap();
-  document.getElementById("countRest").textContent = RESTAURANTS.length + "+";
+  document.getElementById("countRest").textContent = RESTAURANTS.length;
 });
