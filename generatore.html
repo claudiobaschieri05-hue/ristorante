@@ -14,8 +14,8 @@
 </head>
 <body>
 
-  <h1>Generatore "data.js" (200 Ristoranti Reali)</h1>
-  <p>Clicca il bottone qui sotto per fare in modo che il browser calcoli e scarichi automaticamente il file "data.js" con 200 locali.</p>
+  <h1>Generatore "data.js" (500 Ristoranti Reali)</h1>
+  <p>Clicca il bottone qui sotto per fare in modo che il browser calcoli e scarichi automaticamente il file "data.js" con 500 locali.</p>
   
   <button id="genBtn" onclick="generaEscarica()">Genera e Scarica data.js</button>
   <p id="status">✅ File generato e scaricato con successo! Sostituisci il vecchio data.js nella cartella con questo.</p>
@@ -25,7 +25,7 @@
   </div>
 
 <script>
-// --- DATI BASE PER GENERAZIONE 200 LOCALI REALISTICI ---
+// --- DATI BASE PER GENERAZIONE 500 LOCALI REALISTICI ---
 
 const CITIES = [
   { name: "Roma", lat: 41.9028, lng: 12.4964 },
@@ -42,7 +42,16 @@ const CITIES = [
   { name: "Verona", lat: 45.4384, lng: 10.9916 },
   { name: "Siena", lat: 43.3188, lng: 11.3308 },
   { name: "Lecce", lat: 40.3515, lng: 18.1750 },
-  { name: "Siracusa", lat: 37.0755, lng: 15.2866 }
+  { name: "Siracusa", lat: 37.0755, lng: 15.2866 },
+  { name: "Parma", lat: 44.8015, lng: 10.3279 },
+  { name: "Bergamo", lat: 45.6983, lng: 9.6773 },
+  { name: "Lucca", lat: 43.8429, lng: 10.5027 },
+  { name: "Matera", lat: 40.6664, lng: 16.6043 },
+  { name: "Mantova", lat: 45.1564, lng: 10.7914 },
+  { name: "Cagliari", lat: 39.2238, lng: 9.1116 },
+  { name: "Trieste", lat: 45.6495, lng: 13.7768 },
+  { name: "Perugia", lat: 43.1107, lng: 12.3908 },
+  { name: "Pisa", lat: 43.7228, lng: 10.4017 }
 ];
 
 const TEMPLATES = {
@@ -99,11 +108,11 @@ const TEMPLATES = {
 };
 
 const NOMI_AGGETTIVI = {
-  ristorante: ["La Pergola", "Il Faro", "Da Vittorio", "La Terrazza", "Il Gattopardo", "Dal Pescatore", "La Rosetta", "Antico Arco", "Il Girasole", "Armando"],
-  osteria: ["La Fraschetta", "Al Bacco", "Del Chianti", "La Vecchia Lira", "Da Peppe", "Il Cinghiale Errante", "Sora Lella", "Del Viandante", "Osteria N.1", "La Cantina"],
-  pizzeria: ["Sorbillo", "Napoli Verace", "La Bufalina", "Vesuvio", "Margherita", "Forno a Legna", "Bellini", "Pizzarium", "Impasto Perfetto", "Il Pomodorino"],
-  bar: ["Centrale", "Navigli", "Sport", "Roma", "Milano", "Gran Caffè", "Il Chiosco", "Nazionale", "Venezia", "Belvedere"],
-  pasticceria: ["Marchesi", "Siciliana", "Napoli", "Dolce Vita", "Artigianale", "Delizie", "Pasticceria Reale", "Zucchero a Velo", "L'Eclair", "Il Bignè"]
+  ristorante: ["La Pergola", "Il Faro", "Da Vittorio", "La Terrazza", "Il Gattopardo", "Dal Pescatore", "La Rosetta", "Antico Arco", "Il Girasole", "Armando", "Cracco", "Piazza Duomo", "Uliassi", "Reale", "Enoteca Pinchiorri", "Le Calandre", "Osteria Francescana"],
+  osteria: ["La Fraschetta", "Al Bacco", "Del Chianti", "La Vecchia Lira", "Da Peppe", "Il Cinghiale Errante", "Sora Lella", "Del Viandante", "Osteria N.1", "La Cantina", "Trattoria Zà Zà", "Casetta Trastevere", "I Due Ladroni", "Antica Trattoria", "Hostaria"],
+  pizzeria: ["Sorbillo", "Napoli Verace", "La Bufalina", "Vesuvio", "Margherita", "Forno a Legna", "Bellini", "Pizzarium", "Impasto Perfetto", "Il Pomodorino", "Da Michele", "Starita", "50 Kalò", "Seu Pizza", "I Tigli"],
+  bar: ["Centrale", "Navigli", "Sport", "Roma", "Milano", "Gran Caffè", "Il Chiosco", "Nazionale", "Venezia", "Belvedere", "Caffè Florian", "Caffè Greco", "Gambrinus", "Camparino", "Harry's Bar"],
+  pasticceria: ["Marchesi", "Siciliana", "Napoli", "Dolce Vita", "Artigianale", "Delizie", "Pasticceria Reale", "Zucchero a Velo", "L'Eclair", "Il Bignè", "Iginio Massari", "Sal De Riso", "Knam", "Martesana", "Cova"]
 };
 
 function generaDati() {
@@ -111,7 +120,7 @@ function generaDati() {
   let id = 1;
   const cats = ["ristorante", "osteria", "pizzeria", "bar", "pasticceria"];
 
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 500; i++) {
     // Scegli una categoria a rotazione
     const cat = cats[i % cats.length];
     const cityObj = CITIES[i % CITIES.length];
@@ -148,7 +157,7 @@ function generaDati() {
 
   // Costruiamo il testo gigante
   let jsonString = JSON.stringify(result, null, 2);
-  let finalContent = `/* Generato automaticamente - 200 Locali Reali/Misti */\n\nconst RESTAURANTS = ${jsonString};\n`;
+  let finalContent = `/* Generato automaticamente - 500 Locali Reali/Misti */\n\nconst RESTAURANTS = ${jsonString};\n`;
   
   return finalContent;
 }
