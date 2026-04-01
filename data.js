@@ -92,6 +92,14 @@ const NOMI_AGGETTIVI = {
   pasticceria: ["Marchesi", "Siciliana", "Napoli", "Dolce Vita", "Artigianale", "Delizie", "Pasticceria Reale", "Zucchero a Velo", "L'Eclair", "Il Bignè", "Iginio Massari", "Sal De Riso", "Knam", "Martesana", "Cova", "Pasticceria Veneto", "Pinsa e Dolci", "Il Guelfo"]
 };
 
+const REVIEWS_POOL = {
+  ristorante: ["Cibo spettacolare, la cura del dettaglio è folle. Consigliatissimo!", "Una location da sogno e piatti prelibati.", "Il conto è importante, ma l'esperienza li vale tutti.", "Personale fantastico, ritornerò sicuramente per l'anniversario.", "Un percorso di degustazione indimenticabile."],
+  osteria: ["La vera cucina di una volta, come a casa di nonna!", "Porzioni enormi e vino della casa di qualità. Prezzi top.", "Ambiente rustico, personale alla mano e cibo verace.", "Carbonara pazzesca, la migliore della città senza dubbio.", "Un tuffo nei sapori genuini, ci siamo sentiti in famiglia."],
+  pizzeria: ["La vera pizza napoletana, cornicione alto e impasto leggerissimo.", "Sono rimasto sbalordito dal sapore della bufala. Locale sempre pieno!", "Ottimo rapporto qualità/prezzo, la diavola era perfetta.", "Pizze gourmet fantastiche e fritti asciutti e croccanti.", "Difficile trovare una pizza così buona fuori da Napoli!"],
+  bar: ["Cocktail strepitosi, il miglior aperitivo in centro.", "Spritz abbondante e tante tapas gratis, consigliato per studenti.", "Caffè buonissimo e cornetti caldi anche a tarda mattinata.", "Atmosfera rilassata, perfetto per lo smart working o due chiacchiere.", "Servizio veloce e personale simpaticissimo, una garanzia."],
+  pasticceria: ["I loro cannoncini sono illegali, dolci pazzeschi!", "Torte moderne bellissime e buonissime. Ideale per compleanni.", "Il miglior cannolo siciliano mai mangiato al nord.", "Brioche enormi ripieni di pistacchio... un paradiso.", "Qualità artigianale altissima, prezzi onesti e locale profumatissimo."]
+};
+
 function generate500Restaurants() {
   const result = [];
   let id = 1;
@@ -120,6 +128,11 @@ function generate500Restaurants() {
     // Generazione posti liberi (tra 0 e 50). 15% di probabilità di essere completo (0).
     let postiDisponibili = Math.random() < 0.15 ? 0 : Math.floor(Math.random() * 45) + 5;
     
+    // TripAdvisor Data
+    let ratingVal = (Math.random() * (5.0 - 3.8) + 3.8).toFixed(1); // da 3.8 a 5.0
+    let reviewsCount = Math.floor(Math.random() * 2500) + 50; 
+    let topReview = REVIEWS_POOL[cat][Math.floor(Math.random() * REVIEWS_POOL[cat].length)];
+
     // Stelle in base alla categoria
     let starsArr = ["★★★★☆", "★★★★★"];
     if (cat === "osteria" || cat === "bar") starsArr = ["★★★☆☆", "★★★★☆"];
@@ -142,6 +155,9 @@ function generate500Restaurants() {
       email: email,
       form_available: form_available,
       postiDisponibili: postiDisponibili,
+      rating: ratingVal,
+      reviewsCount: reviewsCount,
+      topReview: topReview,
       menu: JSON.parse(JSON.stringify(tpl.menu)) // clona il menu
     };
     result.push(item);
