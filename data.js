@@ -182,6 +182,28 @@ function generate500Restaurants() {
   return result;
 }
 
-// ── ESECUZIONE ──
-// L'array viene popolato automaticamente con 500 locali ogni volta che la pagina si apre!
-const RESTAURANTS = generate500Restaurants();
+// ── ESECUZIONE & CACHE GIORNALIERA ──
+// Il database si aggiorna a mezzanotte. Finché la giornata non cambia, usa la cache salvata.
+const todayStr = new Date().toLocaleDateString("it-IT"); // Es: "01/04/2026"
+const LS_KEY = "resto_data_" + todayStr.replace(/\//g, "-");
+
+let RESTAURANTS = [];
+let storedData = localStorage.getItem(LS_KEY);
+
+if (storedData) {
+  // Se l'utente ha già caricato il sito oggi, carica il database fisso (Persistenza)
+  RESTAURANTS = JSON.parse(storedData);
+} else {
+  // Se è un nuovo giorno (o il primissimo accesso), pulisci i giorni vecchi per non intasare la memoria browser
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith("resto_data_") || key.startsWith("booking_")) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  // Genera i 500 locali aggionati
+  RESTAURANTS = generate500Restaurants();
+
+  // Salvalo nel LocalStorage per bloccarlo per tutto il resto della giornata
+  localStorage.setItem(LS_KEY, JSON.stringify(RESTAURANTS));
+}
