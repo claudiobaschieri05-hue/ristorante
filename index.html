@@ -89,12 +89,27 @@
     <button id="chatbot-close" class="chatbot-close">✕</button>
   </div>
   <div id="chatbot-messages" class="chatbot-messages">
-    <div class="msg ai-msg">
-      Ciao! 👋 Sono il tuo Assistente Virtuale. Cosa vuoi mangiare oggi? Posso suggerirti un locale in base alla città, al tipo di cucina o al tuo budget!
+    <div class="msg-row ai-row">
+      <div class="msg-avatar">🤖</div>
+      <div class="msg ai-msg">
+        Ciao! 👋 Sono il tuo <strong>Sommelier Virtuale</strong>. Sfoglierò i nostri locali per trovarti l'abbinamento perfetto! Cosa desideri mangiare oggi?
+      </div>
     </div>
   </div>
+  
+  <div id="chat-typing" class="chat-typing hidden">
+    <div class="msg-avatar">🤖</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="chat-quick-replies">
+    <button class="quick-reply" onclick="sendQuickReply('Pesce a Palermo')">🐟 Pesce a Palermo</button>
+    <button class="quick-reply" onclick="sendQuickReply('Pizzeria a Napoli')">🍕 Pizzeria a Napoli</button>
+    <button class="quick-reply" onclick="sendQuickReply('Bistecca Fiorentina')">🥩 Bistecca Fiorentina</button>
+  </div>
+
   <div class="chatbot-input">
-    <input type="text" id="chat-input-text" placeholder="Scrivi qui... es: 'Pesce a Napoli'" autocomplete="off">
+    <input type="text" id="chat-input-text" placeholder="Chiedimi un locale o un piatto..." autocomplete="off">
     <button id="chat-send-btn"><span class="material-icons-round">send</span></button>
   </div>
 </div>
