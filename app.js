@@ -354,10 +354,10 @@ window.openBooking = function(id) {
   currentBookingRestId = r.id;
   bookRestName.innerHTML = `Prenota da <strong>${r.name}</strong>`;
   bookForm.reset();
-  bookModal.classList.remove("hidden");
+  bookModal.classList.add("open");
 };
 
-bookClose.addEventListener("click", () => bookModal.classList.add("hidden"));
+bookClose.addEventListener("click", () => bookModal.classList.remove("open"));
 
 bookForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -373,8 +373,8 @@ bookForm.addEventListener("submit", (e) => {
 
   // Conferma
   r.postiDisponibili -= guests;
-  alert(`Grazie! La tua richiesta di prenotazione da ${r.name} per ${guests} persone è stata inviata al ristorante via Email.`);
-  bookModal.classList.add("hidden");
+  alert(`✔️ SUCCESS!\n\nLa richiesta per ${guests} persone è stata inviata a ${r.email}.\n\nIl Ristorante ${r.name} ti confermerà a breve il tavolo.`);
+  bookModal.classList.remove("open");
   
   // Ricarica la vista modal e le cards per mostrare i posti scalati
   openModal(r.id);
