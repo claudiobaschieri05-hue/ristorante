@@ -113,6 +113,12 @@ function generate500Restaurants() {
     let latOffset = (Math.random() - 0.5) * 0.08;
     let lngOffset = (Math.random() - 0.5) * 0.08;
     
+    // Novità: Email e Prenotazioni
+    let email = `info@${urlSlug}.it`;
+    let form_available = Math.random() > 0.1; // 90% ha prenotazioni online libere
+    // Generazione posti liberi (tra 0 e 50). 15% di probabilità di essere completo (0).
+    let postiDisponibili = Math.random() < 0.15 ? 0 : Math.floor(Math.random() * 45) + 5;
+    
     // Stelle in base alla categoria
     let starsArr = ["★★★★☆", "★★★★★"];
     if (cat === "osteria" || cat === "bar") starsArr = ["★★★☆☆", "★★★★☆"];
@@ -132,6 +138,9 @@ function generate500Restaurants() {
       lat: cityObj.lat + latOffset,
       lng: cityObj.lng + lngOffset,
       website: website,
+      email: email,
+      form_available: form_available,
+      postiDisponibili: postiDisponibili,
       menu: JSON.parse(JSON.stringify(tpl.menu)) // clona il menu
     };
     result.push(item);
