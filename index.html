@@ -13,6 +13,11 @@
 </head>
 <body>
 
+<!-- ===== CREDITS BAR ===== -->
+<div class="top-credit-bar">
+  Questo sito è stato creato da <strong>Claudio Baschieri</strong>
+</div>
+
 <!-- ===== HEADER ===== -->
 <header class="site-header">
   <div class="header-inner">
@@ -72,6 +77,44 @@
   <div class="modal-box">
     <button class="modal-close" id="modalClose" aria-label="Chiudi menu">✕</button>
     <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ===== BOOKING MODAL (PRENOTAZIONI) ===== -->
+<div class="modal-overlay hidden" id="bookModal" role="dialog" aria-modal="true">
+  <div class="book-box">
+    <button class="modal-close" id="bookClose" aria-label="Chiudi prenotazione">✕</button>
+    <div class="book-header">
+      <h2 id="bookRestName">Prenota un Tavolo</h2>
+      <p>Compila i dati per inviare la richiesta di prenotazione via Email.</p>
+    </div>
+    <form id="bookForm" class="book-form">
+      <div class="form-group">
+        <label>Nome e Cognome</label>
+        <input type="text" id="bookName" required placeholder="Es. Mario Rossi">
+      </div>
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Telefono</label>
+          <input type="tel" id="bookPhone" required placeholder="Es. 333 1234567">
+        </div>
+        <div class="form-group half">
+          <label>Email</label>
+          <input type="email" id="bookEmail" required placeholder="mario@email.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Data e Orario</label>
+          <input type="datetime-local" id="bookTime" required>
+        </div>
+        <div class="form-group half">
+          <label>Persone</label>
+          <input type="number" id="bookGuests" min="1" max="20" required value="2">
+        </div>
+      </div>
+      <button type="submit" class="book-submit-btn">Conferma Prenotazione</button>
+    </form>
   </div>
 </div>
 
