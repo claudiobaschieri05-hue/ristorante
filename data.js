@@ -133,6 +133,22 @@ function generate500Restaurants() {
     let reviewsCount = Math.floor(Math.random() * 2500) + 50; 
     let topReview = REVIEWS_POOL[cat][Math.floor(Math.random() * REVIEWS_POOL[cat].length)];
 
+    // Generazione Array di 3 Recensioni "Reali" Utenti
+    const nomiUtenti = ["Marco R.", "Giulia T.", "Alessandro M.", "Chiara F.", "Luca P.", "Francesca S.", "Matteo B.", "Sara V.", "Davide C.", "Elena N."];
+    let recensioniReali = [];
+    for(let k=0; k<3; k++) {
+      let nomeRandom = nomiUtenti[Math.floor(Math.random() * nomiUtenti.length)];
+      let testoRandom = REVIEWS_POOL[cat][Math.floor(Math.random() * REVIEWS_POOL[cat].length)];
+      let starsUtente = Math.floor(Math.random() * 2) + 4; // 4 o 5 stelle
+      let dateOffset = Math.floor(Math.random() * 30) + 1; // da 1 a 30 giorni fa
+      recensioniReali.push({
+        user: nomeRandom,
+        text: testoRandom,
+        stars: "★".repeat(starsUtente) + "☆".repeat(5 - starsUtente),
+        date: `${dateOffset} giorni fa`
+      });
+    }
+
     // Stelle in base alla categoria
     let starsArr = ["★★★★☆", "★★★★★"];
     if (cat === "osteria" || cat === "bar") starsArr = ["★★★☆☆", "★★★★☆"];
@@ -158,6 +174,7 @@ function generate500Restaurants() {
       rating: ratingVal,
       reviewsCount: reviewsCount,
       topReview: topReview,
+      reviewsList: recensioniReali,
       menu: JSON.parse(JSON.stringify(tpl.menu)) // clona il menu
     };
     result.push(item);
