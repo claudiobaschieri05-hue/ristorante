@@ -234,7 +234,7 @@ function scrollToBottom() {
   chatMsgs.scrollTop = chatMsgs.scrollHeight;
 }
 
-function addChatMsg(text, isUser, suggestionId) {
+function addChatMsg(text, isUser, suggestionIds = null) {
   const row = document.createElement("div");
   row.className = `msg-row ${isUser ? 'user-row' : 'ai-row'}`;
   
@@ -248,22 +248,34 @@ function addChatMsg(text, isUser, suggestionId) {
     row.innerHTML = avatarHtml + msgContent;
   }
   
-  if (suggestionId && !isUser) {
-    const r = RESTAURANTS.find(x => x.id === suggestionId);
-    if (r) {
-      const card = document.createElement("div");
-      card.className = "chat-sugg-card";
-      card.onclick = () => { openModal(r.id); chatWindow.classList.add("hidden"); };
-      card.innerHTML = `
-        <div class="chat-sugg-icon">${r.emoji}</div>
-        <div class="chat-sugg-info">
-          <div class="chat-sugg-title">${r.name}</div>
-          <div class="chat-sugg-meta">${r.cat} a ${r.city} · ${r.avgPrice}</div>
-        </div>
-      `;
-      // Append card inside the msg div
-      row.querySelector('.msg').appendChild(card);
-    }
+  const msgDiv = row.querySelector('.msg');
+
+  if (suggestionIds && !isUser) {
+    // Se è un array di id (Multi-card)
+    let ids = Array.isArray(suggestionIds) ? suggestionIds : [suggestionIds];
+    
+    ids.forEach(id => {
+      const r = RESTAURANTS.find(x => x.id === id);
+      if (r) {
+        const card = document.createElement("div");
+        card.className = "chat-sugg-card";
+        card.onclick = () => { openModal(r.id); chatWindow.classList.add("hidden"); };
+        
+        const ratingColor = parseFloat(r.rating) >= 4.5 ? '#2d8a39' : '#c9933a';
+        
+        card.innerHTML = `
+          <div class="chat-sugg-icon">${r.emoji}</div>
+          <div class="chat-sugg-info">
+            <div class="chat-sugg-title">${r.name}</div>
+            <div class="chat-sugg-meta">
+              📍 ${r.city} • 💶 ${r.avgPrice}<br>
+              <span style="color:${ratingColor};font-weight:700;">${r.rating}/5</span> su ${r.reviewsCount} recensioni
+            </div>
+          </div>
+        `;
+        msgDiv.appendChild(card);
+      }
+    });
   }
   
   chatMsgs.appendChild(row);
@@ -271,10 +283,26 @@ function addChatMsg(text, isUser, suggestionId) {
 }
 
 function handleAiResponse(query) {
-  chatTyping.classList.add("hidden"); // hide typing indicator
+  chatTyping.classList.add("hidden"); 
   
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().trim();
   
+  const isVago = q.length < 5 || q === "ciao" || q.includes("ho fame") || q.includes("consigli") || q.includes("aiuto");
+  
+  const specificMatch = RESTAURANTS.find(r => q.includes(r.name.toLowerCase()));
+
+  if (specificMatch && (q.includes("info") || q.includes("recension") || q.includes("vota") || q.includes("tripadvisor") || q.includes("dati"))) {
+    addChatMsg(`Certamente! Ecco i dati TripAdvisor per <strong>${specificMatch.name}</strong> a ${specificMatch.city}.<br><br>🌟 <strong>${specificMatch.rating}/5</strong> (su ${specificMatch.reviewsCount} recensioni)<br><br>💬 Dicono di loro: <br><em>"${specificMatch.topReview}"</em><br><br>Clicca la scheda per prenotare.`, false, [specificMatch.id]);
+    return;
+  }
+
+  if (isVago) {
+    const misti = [];
+    for(let i=0; i<3; i++) misti.push(RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)].id);
+    addChatMsg("Sembri indeciso! Ecco **3 tra i nostri locali meglio recensiti** su TripAdvisor per ispirarti:", false, misti);
+    return;
+  }
+
   // Basic semantic match
   let matches = RESTAURANTS.filter(r => {
     return r.name.toLowerCase().includes(q) || 
@@ -312,13 +340,18 @@ function handleAiResponse(query) {
   if (q.includes("palermo")) matches = matches.filter(r => r.city.toLowerCase() === "palermo");
 
   if (matches.length > 0) {
-    // Pick from top best
-    const top = matches[Math.floor(Math.random() * Math.min(3, matches.length))]; 
-    addChatMsg(`Ho trovato il posto perfetto per te! Guarda cosa propone <strong>${top.name}</strong> a ${top.city}. Clicca la card per il menu!`, false, top.id);
+    if (matches.length === 1) {
+      const top = matches[0];
+      addChatMsg(`Ho trovato un posto perfetto: <strong>${top.name}</strong> a ${top.city}.`, false, [top.id]);
+    } else {
+      const scelti = matches.sort(() => 0.5 - Math.random()).slice(0, 3);
+      const ids = scelti.map(r => r.id);
+      addChatMsg(`Ho trovato diverse opzioni formidabili! Ecco i ${ids.length} migliori selezionati per te:`, false, ids);
+    }
   } else {
-    // try random suggestion
-    const r = RESTAURANTS[Math.floor(Math.random()*RESTAURANTS.length)];
-    addChatMsg(`Mmm... i miei database non segnalano una corrispondenza esattissima, ma fossi in te andrei sul sicuro qui: <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
+    const misti = [];
+    for(let i=0; i<3; i++) misti.push(RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)].id);
+    addChatMsg(`Mmm... non ho una corrispondenza esattissima, ma ti consiglio vivamente questi posti spettacolari:`, false, misti);
   }
 }
 
