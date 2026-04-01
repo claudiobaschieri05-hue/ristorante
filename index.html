@@ -76,6 +76,8 @@
 </div>
 
 <!-- ===== AI CHATBOT VIRTUAL SOMMELIER ===== -->
+<div id="chatbot-overlay" class="chatbot-overlay hidden"></div>
+
 <button id="chatbot-fab" class="chatbot-fab">
   <span class="material-icons-round">smart_toy</span>
 </button>
@@ -92,7 +94,8 @@
     <div class="msg-row ai-row">
       <div class="msg-avatar">🤖</div>
       <div class="msg ai-msg">
-        Ciao! 👋 Sono il tuo <strong>Sommelier Virtuale</strong>. Sfoglierò i nostri locali per trovarti l'abbinamento perfetto! Cosa desideri mangiare oggi?
+        Benvenuto! Sono il tuo <strong>Sommelier Virtuale</strong>. Elaboro oltre 500 menu in tempo reale per trovarti l'abbinamento perfetto. 
+        <br><br>Vorresti provare qualcosa di speciale oggi?
       </div>
     </div>
   </div>
@@ -103,13 +106,14 @@
   </div>
 
   <div class="chat-quick-replies">
-    <button class="quick-reply" onclick="sendQuickReply('Pesce a Palermo')">🐟 Pesce a Palermo</button>
-    <button class="quick-reply" onclick="sendQuickReply('Pizzeria a Napoli')">🍕 Pizzeria a Napoli</button>
-    <button class="quick-reply" onclick="sendQuickReply('Bistecca Fiorentina')">🥩 Bistecca Fiorentina</button>
+    <button class="quick-reply" onclick="sendQuickReply('Consigliami una cena romantica')">🕯️ Cena romantica</button>
+    <button class="quick-reply" onclick="sendQuickReply('💸 Locale economico per studenti')">💸 Economico</button>
+    <button class="quick-reply" onclick="sendQuickReply('Voglio mangiare una bistecca indimenticabile')">🥩 Bistecca Top</button>
+    <button class="quick-reply" onclick="sendQuickReply('Cerco tapas e aperitivo in centro')">🍸 Aperitivo</button>
   </div>
 
   <div class="chatbot-input">
-    <input type="text" id="chat-input-text" placeholder="Chiedimi un locale o un piatto..." autocomplete="off">
+    <input type="text" id="chat-input-text" placeholder="Es. 'Pizzerie a Roma' o 'Pesce a Napoli'..." autocomplete="off">
     <button id="chat-send-btn"><span class="material-icons-round">send</span></button>
   </div>
 </div>
