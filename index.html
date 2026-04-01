@@ -7,6 +7,7 @@
   <meta name="description" content="Guida interattiva ai migliori ristoranti, osterie, pasticcerie e bar italiani con menu dettagliati, prezzi e mappa." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -71,6 +72,30 @@
   <div class="modal-box">
     <button class="modal-close" id="modalClose" aria-label="Chiudi menu">✕</button>
     <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ===== AI CHATBOT VIRTUAL SOMMELIER ===== -->
+<button id="chatbot-fab" class="chatbot-fab">
+  <span class="material-icons-round">smart_toy</span>
+</button>
+
+<div id="chatbot-window" class="chatbot-window hidden">
+  <div class="chatbot-header">
+    <div>
+      <strong>Virtual Sommelier 🍷</strong>
+      <p>L'AI intelligente dei Ristoranti d'Italia</p>
+    </div>
+    <button id="chatbot-close" class="chatbot-close">✕</button>
+  </div>
+  <div id="chatbot-messages" class="chatbot-messages">
+    <div class="msg ai-msg">
+      Ciao! 👋 Sono il tuo Assistente Virtuale. Cosa vuoi mangiare oggi? Posso suggerirti un locale in base alla città, al tipo di cucina o al tuo budget!
+    </div>
+  </div>
+  <div class="chatbot-input">
+    <input type="text" id="chat-input-text" placeholder="Scrivi qui... es: 'Pesce a Napoli'" autocomplete="off">
+    <button id="chat-send-btn"><span class="material-icons-round">send</span></button>
   </div>
 </div>
 
