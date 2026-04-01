@@ -107,14 +107,15 @@ function generate500Restaurants() {
     const randomSuffix = Math.random() > 0.4 ? " " + cityObj.name : "";
     const nome = (Math.random() > 0.3 ? cat.charAt(0).toUpperCase() + cat.slice(1) + " " : "") + nomePrefix + randomSuffix;
     
-    let urlSlug = nome.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let website = "https://www." + urlSlug + ".it";
+    let urlSlug = encodeURIComponent(nome + " " + cityObj.name + " ristorante");
+    let website = "https://www.google.com/search?q=" + urlSlug;
 
     let latOffset = (Math.random() - 0.5) * 0.08;
     let lngOffset = (Math.random() - 0.5) * 0.08;
     
     // Novità: Email e Prenotazioni
-    let email = `info@${urlSlug}.it`;
+    let urlSlugSimple = nome.toLowerCase().replace(/[^a-z0-9]/g, '');
+    let email = `info@${urlSlugSimple}.it`;
     let form_available = Math.random() > 0.1; // 90% ha prenotazioni online libere
     // Generazione posti liberi (tra 0 e 50). 15% di probabilità di essere completo (0).
     let postiDisponibili = Math.random() < 0.15 ? 0 : Math.floor(Math.random() * 45) + 5;
