@@ -197,16 +197,36 @@ const chatClose = document.getElementById("chatbot-close");
 const chatInput = document.getElementById("chat-input-text");
 const chatSend = document.getElementById("chat-send-btn");
 const chatMsgs = document.getElementById("chatbot-messages");
+const chatTyping = document.getElementById("chat-typing");
 
 chatFab.addEventListener("click", () => { chatWindow.classList.remove("hidden"); chatInput.focus(); });
 chatClose.addEventListener("click", () => chatWindow.classList.add("hidden"));
 
+// Used by the Quick Reply buttons in HTML
+window.sendQuickReply = function(text) {
+  chatInput.value = text;
+  processChat();
+};
+
+function scrollToBottom() {
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+}
+
 function addChatMsg(text, isUser, suggestionId) {
-  const msg = document.createElement("div");
-  msg.className = `msg ${isUser ? 'user-msg' : 'ai-msg'}`;
-  msg.innerHTML = text;
+  const row = document.createElement("div");
+  row.className = `msg-row ${isUser ? 'user-row' : 'ai-row'}`;
   
-  if (suggestionId) {
+  const avatarHtml = isUser ? `<div class="msg-avatar">👤</div>` : `<div class="msg-avatar">🤖</div>`;
+  
+  let msgContent = `<div class="msg ${isUser ? 'user-msg' : 'ai-msg'}">${text}</div>`;
+  
+  if (isUser) {
+    row.innerHTML = msgContent + avatarHtml;
+  } else {
+    row.innerHTML = avatarHtml + msgContent;
+  }
+  
+  if (suggestionId && !isUser) {
     const r = RESTAURANTS.find(x => x.id === suggestionId);
     if (r) {
       const card = document.createElement("div");
@@ -219,15 +239,18 @@ function addChatMsg(text, isUser, suggestionId) {
           <div class="chat-sugg-meta">${r.cat} a ${r.city} · ${r.avgPrice}</div>
         </div>
       `;
-      msg.appendChild(card);
+      // Append card inside the msg div
+      row.querySelector('.msg').appendChild(card);
     }
   }
   
-  chatMsgs.appendChild(msg);
-  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  chatMsgs.appendChild(row);
+  scrollToBottom();
 }
 
 function handleAiResponse(query) {
+  chatTyping.classList.add("hidden"); // hide typing indicator
+  
   const q = query.toLowerCase();
   
   // Basic semantic match
@@ -238,24 +261,27 @@ function handleAiResponse(query) {
            r.desc.toLowerCase().includes(q);
   });
   
-  const mStr = JSON.stringify(RESTAURANTS).toLowerCase();
-  if (q.includes("pesce") || q.includes("mare")) {
+  if (q.includes("pesce") || q.includes("mare") || q.includes("sushi")) {
     matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
   }
   if (q.includes("carne") || q.includes("bistecca") || q.includes("grigliata")) {
-    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || JSON.stringify(r.menu).toLowerCase().includes("grigliata"));
+    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || JSON.stringify(r.menu).toLowerCase().includes("grigliata") || r.desc.toLowerCase().includes("carne"));
   }
-  if (q.includes("pizza") || q.includes("pizzeria")) {
+  if (q.includes("pizza") || q.includes("pizzeria") || q.includes("margherita")) {
     matches = matches.filter(r => r.cat === "pizzeria" || JSON.stringify(r.menu).toLowerCase().includes("pizza"));
   }
+  if (q.includes("roma")) matches = matches.filter(r => r.city.toLowerCase() === "roma");
+  if (q.includes("napoli")) matches = matches.filter(r => r.city.toLowerCase() === "napoli");
+  if (q.includes("milano")) matches = matches.filter(r => r.city.toLowerCase() === "milano");
 
   if (matches.length > 0) {
-    const top = matches[0];
-    addChatMsg(`Certamente! Ti suggerisco <strong>${top.name}</strong> a ${top.city}. Clicca qui sotto per vedere il menu completo!`, false, top.id);
+    // Pick the best match (first one) or shuffle
+    const top = matches[Math.floor(Math.random() * Math.min(3, matches.length))]; 
+    addChatMsg(`Certamente! Ho trovato l'abbinamento perfetto. Ti suggerisco <strong>${top.name}</strong> a ${top.city}. Clicca la card qui sotto per esplorare il menu!`, false, top.id);
   } else {
     // try random suggestion
     const r = RESTAURANTS[Math.floor(Math.random()*RESTAURANTS.length)];
-    addChatMsg(`Hmm, non ho trovato corrispondenze esatte per questa ricerca, ma ti consiglio vivamente di provare <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
+    addChatMsg(`Hmm, ho guardato in cantina e in cucina ma non ho corrispondenze esatte per "${query}". Però ti consiglio vivamente di provare questo capolavoro: <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
   }
 }
 
@@ -265,8 +291,14 @@ function processChat() {
   addChatMsg(text, true);
   chatInput.value = "";
   
-  // Fake thinking delay
-  setTimeout(() => handleAiResponse(text), 600);
+  // Show typing indicator
+  chatMsgs.appendChild(chatTyping); // move it to the bottom
+  chatTyping.classList.remove("hidden");
+  scrollToBottom();
+  
+  // Fake thinking delay for realism
+  const thinkingTime = Math.random() * 800 + 800; // 800-1600ms
+  setTimeout(() => handleAiResponse(text), thinkingTime);
 }
 
 chatSend.addEventListener("click", processChat);
