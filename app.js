@@ -96,7 +96,7 @@ function openModal(id) {
   const tabs = Object.keys(r.menu);
   const tabsHTML = tabs.map((k, i) =>
     `<button class="menu-tab ${i===0?"active":""}" data-tab="${k}" onclick="switchTab('${k}',this)">${TAB_LABELS[k]||k}</button>`
-  ).join("");
+  ).join("") + `<button class="menu-tab" data-tab="recensioni" onclick="switchTab('recensioni',this)">⭐ Recensioni</button>`;
 
   const panelsHTML = tabs.map((k, i) => {
     const dClass = DRINK_CLASSES[k] || "";
@@ -110,6 +110,21 @@ function openModal(id) {
       </div>`).join("");
     return `<div class="menu-panel ${i===0?"active":""}" id="panel-${k}">${items}</div>`;
   }).join("");
+  
+  // Costruzione Pannello Recensioni
+  const reviewsHTML = r.reviewsList ? r.reviewsList.map(rev => `
+    <div class="review-card">
+      <div class="rev-avatar">👤</div>
+      <div class="rev-body">
+        <div class="rev-header">
+          <strong>${rev.user}</strong>
+          <span class="rev-date">${rev.date}</span>
+        </div>
+        <div class="rev-stars">${rev.stars}</div>
+        <div class="rev-text">"${rev.text}"</div>
+      </div>
+    </div>
+  `).join("") : "";
 
   document.getElementById("modalContent").innerHTML = `
     <div class="m-header">
@@ -134,7 +149,15 @@ function openModal(id) {
       <div class="m-desc">${r.desc}</div>
     </div>
     <div class="menu-tabs">${tabsHTML}</div>
-    <div class="menu-body">${panelsHTML}</div>`;
+    <div class="menu-body">
+      ${panelsHTML}
+      <div class="menu-panel" id="panel-recensioni">
+        <div class="reviews-summary">
+          ⭐ <strong>${r.rating} / 5</strong> - Basato su ${r.reviewsCount} recensioni TripAdvisor
+        </div>
+        ${reviewsHTML}
+      </div>
+    </div>`;
 
   const overlay = document.getElementById("modal");
   overlay.classList.add("open");
@@ -288,70 +311,90 @@ function handleAiResponse(query) {
   const q = query.toLowerCase().trim();
   
   const isVago = q.length < 5 || q === "ciao" || q.includes("ho fame") || q.includes("consigli") || q.includes("aiuto");
-  
   const specificMatch = RESTAURANTS.find(r => q.includes(r.name.toLowerCase()));
 
+  // 1. Dettagli Specifici (TripAdvisor) su Ristorante
   if (specificMatch && (q.includes("info") || q.includes("recension") || q.includes("vota") || q.includes("tripadvisor") || q.includes("dati"))) {
     addChatMsg(`Certamente! Ecco i dati TripAdvisor per <strong>${specificMatch.name}</strong> a ${specificMatch.city}.<br><br>🌟 <strong>${specificMatch.rating}/5</strong> (su ${specificMatch.reviewsCount} recensioni)<br><br>💬 Dicono di loro: <br><em>"${specificMatch.topReview}"</em><br><br>Clicca la scheda per prenotare.`, false, [specificMatch.id]);
     return;
   }
 
+  // 2. Query Vaga -> Tre scelte random spettacolari
   if (isVago) {
-    const misti = [];
-    for(let i=0; i<3; i++) misti.push(RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)].id);
+    const misti = [...RESTAURANTS].sort(() => 0.5 - Math.random()).slice(0, 3).map(r => r.id);
     addChatMsg("Sembri indeciso! Ecco **3 tra i nostri locali meglio recensiti** su TripAdvisor per ispirarti:", false, misti);
     return;
   }
 
-  // Basic semantic match
-  let matches = RESTAURANTS.filter(r => {
-    return r.name.toLowerCase().includes(q) || 
-           r.city.toLowerCase().includes(q) || 
-           r.cat.toLowerCase().includes(q) ||
-           r.desc.toLowerCase().includes(q);
-  });
-  
-  // Logica avanzata di match
-  if (q.includes("pesce") || q.includes("mare") || q.includes("sushi")) {
-    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
-  }
-  if (q.includes("carne") || q.includes("bistecca") || q.includes("grigliata")) {
-    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || JSON.stringify(r.menu).toLowerCase().includes("grigliata") || r.desc.toLowerCase().includes("carne"));
-  }
+  // 3. MOTORE DI RICERCA SEMANTICA STRICT
+  let matches = RESTAURANTS;
+  let hasFoodOrCatFilter = false;
+
+  // A) Filtri Categoria Assoluti (Se scrivi Pizzeria, escono *solo* Pizzerie)
   if (q.includes("pizza") || q.includes("pizzeria") || q.includes("margherita")) {
-    matches = matches.filter(r => r.cat === "pizzeria" || JSON.stringify(r.menu).toLowerCase().includes("pizza"));
+    matches = matches.filter(r => r.cat === "pizzeria");
+    hasFoodOrCatFilter = true;
+  } else if (q.includes("dolce") || q.includes("pasticceria") || q.includes("gelato") || q.includes("cornetto")) {
+    matches = matches.filter(r => r.cat === "pasticceria");
+    hasFoodOrCatFilter = true;
+  } else if (q.includes("bar") || q.includes("aperitivo") || q.includes("cocktail") || q.includes("spritz") || q.includes("tapas")) {
+    matches = matches.filter(r => r.cat === "bar");
+    hasFoodOrCatFilter = true;
+  } else if (q.includes("osteria") || q.includes("trattoria") || q.includes("nonna")) {
+    matches = matches.filter(r => r.cat === "osteria");
+    hasFoodOrCatFilter = true;
+  } else if (q.includes("ristorante") || q.includes("gourmet")) {
+    matches = matches.filter(r => r.cat === "ristorante");
+    hasFoodOrCatFilter = true;
   }
   
-  // Nuove logiche da Quick Replies
+  // B) Filtri Cibo Specifico (se non ha matchato la categoria pura)
+  if (!hasFoodOrCatFilter) {
+    if (q.includes("pesce") || q.includes("mare") || q.includes("sushi")) {
+      matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
+      hasFoodOrCatFilter = true;
+    } else if (q.includes("carne") || q.includes("bistecca") || q.includes("grigliata")) {
+      matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || r.desc.toLowerCase().includes("carne"));
+      hasFoodOrCatFilter = true;
+    }
+  }
+
+  // C) Ricerca Testuale (Solo se non c'è già un filtro Categoria/Cibo forte)
+  if (!hasFoodOrCatFilter) {
+    matches = matches.filter(r => r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
+  }
+
+  // D) Modificatori Addizionali
   if (q.includes("economico") || q.includes("studenti")) {
-    matches = matches.filter(r => r.avgPrice.includes("10") || r.avgPrice.includes("15") || r.avgPrice.includes("20") || r.cat === 'pizzeria' || r.cat === 'bar');
+    matches = matches.filter(r => parseInt(r.avgPrice.replace(/[^0-9]/g, '').substring(0,2)) <= 20 || r.cat === 'pizzeria' || r.cat === 'bar');
   }
-  if (q.includes("romantica") || q.includes("elegante") || q.includes("anniversario")) {
-    matches = matches.filter(r => r.cat === 'ristorante' && (r.stars === '★★★★★' || r.stars === '★★★★☆'));
-  }
-  if (q.includes("aperitivo") || q.includes("tapas") || q.includes("spritz")) {
-    matches = matches.filter(r => r.cat === 'bar' || JSON.stringify(r.menu).toLowerCase().includes("aperitivo") || JSON.stringify(r.menu).toLowerCase().includes("spritz"));
+  if (q.includes("romantica") || q.includes("elegante") || q.includes("lusso") || q.includes("anniversario")) {
+    matches = matches.filter(r => r.stars === '★★★★★' || r.stars === '★★★★☆');
   }
 
-  // Filtri città
-  if (q.includes("roma")) matches = matches.filter(r => r.city.toLowerCase() === "roma");
-  if (q.includes("napoli")) matches = matches.filter(r => r.city.toLowerCase() === "napoli");
-  if (q.includes("milano")) matches = matches.filter(r => r.city.toLowerCase() === "milano");
-  if (q.includes("palermo")) matches = matches.filter(r => r.city.toLowerCase() === "palermo");
+  // E) Estrazione automatica CITTÀ (Forza il match della città)
+  const allCities = [...new Set(RESTAURANTS.map(r => r.city.toLowerCase()))];
+  for (let c of allCities) {
+    if (q.includes(c)) {
+      matches = matches.filter(r => r.city.toLowerCase() === c);
+      break; // fermati alla prima città trovata
+    }
+  }
 
+  // 4. ELABORAZIONE FINALE DELLA RISPOSTA
   if (matches.length > 0) {
     if (matches.length === 1) {
       const top = matches[0];
-      addChatMsg(`Ho trovato un posto perfetto: <strong>${top.name}</strong> a ${top.city}.`, false, [top.id]);
+      addChatMsg(`Perfetto, ho una scelta miratissima per te! Ecco <strong>${top.name}</strong> a ${top.city}.`, false, [top.id]);
     } else {
-      const scelti = matches.sort(() => 0.5 - Math.random()).slice(0, 3);
+      // Prendi fino a 3 migliori (Ordinati per r.rating discendente simulato e presi a caso tra i top)
+      const scelti = matches.sort((a,b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 3);
       const ids = scelti.map(r => r.id);
-      addChatMsg(`Ho trovato diverse opzioni formidabili! Ecco i ${ids.length} migliori selezionati per te:`, false, ids);
+      addChatMsg(`Assolutamente! Ho trovato ${matches.length} locali incredibili. Ecco la mia <strong>Top ${ids.length}</strong> assoluta in base a quello che cerchi:`, false, ids);
     }
   } else {
-    const misti = [];
-    for(let i=0; i<3; i++) misti.push(RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)].id);
-    addChatMsg(`Mmm... non ho una corrispondenza esattissima, ma ti consiglio vivamente questi posti spettacolari:`, false, misti);
+    const misti = [...RESTAURANTS].sort(() => 0.5 - Math.random()).slice(0, 3).map(r => r.id);
+    addChatMsg(`Cavolo, non ho trovato un match 100% esatto per questa estrosa richiesta... ma ti prometto che questi 3 posti in giro per l'Italia sono una bomba:`, false, misti);
   }
 }
 
