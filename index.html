@@ -81,12 +81,12 @@
 </div>
 
 <!-- ===== BOOKING MODAL (PRENOTAZIONI) ===== -->
-<div class="modal-overlay hidden" id="bookModal" role="dialog" aria-modal="true">
+<div class="modal-overlay" id="bookModal" role="dialog" aria-modal="true" style="z-index: 10005;">
   <div class="book-box">
     <button class="modal-close" id="bookClose" aria-label="Chiudi prenotazione">✕</button>
     <div class="book-header">
       <h2 id="bookRestName">Prenota un Tavolo</h2>
-      <p>Compila i dati per inviare la richiesta di prenotazione via Email.</p>
+      <p>Compila i dati per inviare la richiesta di prenotazione ufficiale.</p>
     </div>
     <form id="bookForm" class="book-form">
       <div class="form-group">
@@ -127,9 +127,15 @@
 
 <div id="chatbot-window" class="chatbot-window hidden">
   <div class="chatbot-header">
-    <div>
-      <strong>Virtual Sommelier 🍷</strong>
-      <p>L'AI intelligente dei Ristoranti d'Italia</p>
+    <div class="chat-header-info">
+      <div class="chat-avatar-wrapper">
+        <span class="chat-status-dot"></span>
+        🤖
+      </div>
+      <div>
+        <strong>Sommelier V.I.P.</strong>
+        <p>🟢 Online — Intelligenza Artificiale</p>
+      </div>
     </div>
     <button id="chatbot-close" class="chatbot-close">✕</button>
   </div>
@@ -137,8 +143,8 @@
     <div class="msg-row ai-row">
       <div class="msg-avatar">🤖</div>
       <div class="msg ai-msg">
-        Benvenuto! Sono il tuo <strong>Sommelier Virtuale</strong>. Elaboro oltre 500 menu in tempo reale per trovarti l'abbinamento perfetto. 
-        <br><br>Vorresti provare qualcosa di speciale oggi?
+        Benvenuto nel tuo assistente culinario <strong>AI Premium</strong>. Elaboro in tempo reale il database dei 500 migliori locali italiani. 
+        <br><br>Quali sapori stai cercando oggi? Dimmi un piatto, una città o un'atmosfera!
       </div>
     </div>
   </div>
