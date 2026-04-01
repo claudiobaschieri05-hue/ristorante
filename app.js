@@ -311,10 +311,15 @@ function handleAiResponse(query) {
   const q = query.toLowerCase().trim();
   
   const isVago = q.length < 5 || q === "ciao" || q.includes("ho fame") || q.includes("consigli") || q.includes("aiuto");
-  const specificMatch = RESTAURANTS.find(r => q.includes(r.name.toLowerCase()));
+  
+  // Specific match: controlliamo se il nome base (es. "Sorbillo" ignorando "Napoli") è nella query
+  const specificMatch = RESTAURANTS.find(r => {
+    let baseName = r.name.toLowerCase().split(' ')[0];
+    return baseName.length > 3 && q.includes(baseName);
+  });
 
   // 1. Dettagli Specifici (TripAdvisor) su Ristorante
-  if (specificMatch && (q.includes("info") || q.includes("recension") || q.includes("vota") || q.includes("tripadvisor") || q.includes("dati"))) {
+  if (specificMatch && (q.includes("info") || q.includes("recension") || q.includes("vota") || q.includes("voto") || q.includes("tripadvisor") || q.includes("dati") || q.includes("dimmi"))) {
     addChatMsg(`Certamente! Ecco i dati TripAdvisor per <strong>${specificMatch.name}</strong> a ${specificMatch.city}.<br><br>🌟 <strong>${specificMatch.rating}/5</strong> (su ${specificMatch.reviewsCount} recensioni)<br><br>💬 Dicono di loro: <br><em>"${specificMatch.topReview}"</em><br><br>Clicca la scheda per prenotare.`, false, [specificMatch.id]);
     return;
   }
@@ -330,20 +335,20 @@ function handleAiResponse(query) {
   let matches = RESTAURANTS;
   let hasFoodOrCatFilter = false;
 
-  // A) Filtri Categoria Assoluti (Se scrivi Pizzeria, escono *solo* Pizzerie)
-  if (q.includes("pizza") || q.includes("pizzeria") || q.includes("margherita")) {
+  // A) Filtri Categoria Assoluti (Singolari e Plurali)
+  if (q.includes("pizza") || q.includes("pizzeria") || q.includes("pizzerie") || q.includes("margherita")) {
     matches = matches.filter(r => r.cat === "pizzeria");
     hasFoodOrCatFilter = true;
-  } else if (q.includes("dolce") || q.includes("pasticceria") || q.includes("gelato") || q.includes("cornetto")) {
+  } else if (q.includes("dolce") || q.includes("pasticceria") || q.includes("pasticcerie") || q.includes("gelato") || q.includes("cornetto")) {
     matches = matches.filter(r => r.cat === "pasticceria");
     hasFoodOrCatFilter = true;
   } else if (q.includes("bar") || q.includes("aperitivo") || q.includes("cocktail") || q.includes("spritz") || q.includes("tapas")) {
     matches = matches.filter(r => r.cat === "bar");
     hasFoodOrCatFilter = true;
-  } else if (q.includes("osteria") || q.includes("trattoria") || q.includes("nonna")) {
+  } else if (q.includes("osteria") || q.includes("osterie") || q.includes("trattoria") || q.includes("trattorie") || q.includes("nonna")) {
     matches = matches.filter(r => r.cat === "osteria");
     hasFoodOrCatFilter = true;
-  } else if (q.includes("ristorante") || q.includes("gourmet")) {
+  } else if (q.includes("ristorante") || q.includes("ristoranti") || q.includes("gourmet")) {
     matches = matches.filter(r => r.cat === "ristorante");
     hasFoodOrCatFilter = true;
   }
