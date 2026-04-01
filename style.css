@@ -22,6 +22,15 @@
 
 html { scroll-behavior: smooth; }
 
+/* ════════════════ TOP CREDIT BAR ════════════════ */
+.top-credit-bar {
+  background: var(--dark); color: #fff; text-align: center;
+  padding: 8px; font-size: .8rem;
+  border-bottom: 2px solid var(--gold);
+  letter-spacing: .02em;
+}
+.top-credit-bar strong { color: var(--gold-l); margin-left: 4px; }
+
 body {
   font-family: 'Inter', sans-serif;
   background: var(--cream);
@@ -220,6 +229,11 @@ body {
 }
 .card-price { font-size: .82rem; color: var(--muted); }
 .card-price strong { color: var(--dark); font-weight: 600; }
+
+.card-availability { margin-top: 4px; font-size: .75rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.card-availability.av-green { color: #2d8a39; }
+.card-availability.av-red { color: #d32f2f; }
+
 .card-website-btn {
   background: rgba(0,0,0,.05); color: var(--muted); border: none; border-radius: 8px; padding: 6px 10px;
   font-size: .75rem; font-weight: 600; cursor: pointer; transition: .2s; margin-top: 8px; width: 100%;
@@ -437,6 +451,38 @@ body {
   cursor: pointer; border: none; transition: var(--tr);
 }
 .popup-btn:hover { background: var(--gold-l); }
+
+/* ════════════════ BOOKING MODAL (PRENOTAZIONI) ════════════════ */
+.book-box {
+  background: #fff; border-radius: 20px; width: 500px; max-width: 90%;
+  position: relative; overflow: hidden; animation: modalPop .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 40px rgba(0,0,0,.4);
+}
+.book-header {
+  background: linear-gradient(135deg, var(--dark) 0%, #2e1e06 100%);
+  padding: 24px 30px; color: #fff; border-bottom: 3px solid var(--gold);
+}
+.book-header h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 5px; color: var(--gold-l); }
+.book-header p { font-size: .85rem; color: #c4a878; }
+.book-form { padding: 30px; display: flex; flex-direction: column; gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-row { display: flex; gap: 16px; }
+.form-group.half { flex: 1; }
+.form-group label { font-size: .85rem; font-weight: 600; color: var(--muted); }
+.form-group input { padding: 12px; border: 1px solid rgba(0,0,0,.15); border-radius: 8px; font-size: .95rem; font-family: 'Inter', sans-serif; transition: .2s; }
+.form-group input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,147,58,.15); }
+.book-submit-btn {
+  background: var(--dark); color: #fff; border: none; padding: 16px; border-radius: 10px; font-size: 1rem; font-weight: bold;
+  cursor: pointer; transition: .2s; margin-top: 10px;
+}
+.book-submit-btn:hover { background: var(--gold); color: var(--dark); }
+
+.m-book-action {
+  background: var(--gold); color: var(--dark); border: none; padding: 10px 20px; border-radius: 8px;
+  font-weight: 700; font-size: .9rem; cursor: pointer; transition: .2s; margin-left: auto;
+}
+.m-book-action:hover { background: #fff; }
+.m-book-action[disabled] { background: #ccc; cursor: not-allowed; color: #666; }
 
 /* ════════════════ AI CHATBOT VIRTUAL SOMMELIER ════════════════ */
 .chatbot-fab {
