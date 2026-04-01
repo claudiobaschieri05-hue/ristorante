@@ -81,6 +81,7 @@ function renderCards(list) {
           </div>
           <button class="card-btn" onclick="openModal(${r.id})">Vedi Menu →</button>
         </div>
+        ${r.website ? `<a href="${r.website}" target="_blank" class="card-website-btn">🌐 Visita sito web</a>` : ''}
       </div>`;
     grid.appendChild(card);
   });
@@ -119,6 +120,7 @@ function openModal(id) {
         <span class="m-meta-item">🕐 ${r.orari}</span>
         <span class="m-meta-item">${r.stars}</span>
         <span class="m-meta-item">💶 ${r.avgPrice}</span>
+        ${r.website ? `<a href="${r.website}" target="_blank" class="m-meta-item website-link">🌐 SITO UFFICIALE</a>` : ''}
       </div>
       <div class="m-desc">${r.desc}</div>
     </div>
@@ -187,3 +189,85 @@ document.addEventListener("DOMContentLoaded", () => {
   initMap();
   document.getElementById("countRest").textContent = RESTAURANTS.length;
 });
+
+// ── AI CHATBOT VIRTUAL SOMMELIER ──
+const chatFab = document.getElementById("chatbot-fab");
+const chatWindow = document.getElementById("chatbot-window");
+const chatClose = document.getElementById("chatbot-close");
+const chatInput = document.getElementById("chat-input-text");
+const chatSend = document.getElementById("chat-send-btn");
+const chatMsgs = document.getElementById("chatbot-messages");
+
+chatFab.addEventListener("click", () => { chatWindow.classList.remove("hidden"); chatInput.focus(); });
+chatClose.addEventListener("click", () => chatWindow.classList.add("hidden"));
+
+function addChatMsg(text, isUser, suggestionId) {
+  const msg = document.createElement("div");
+  msg.className = `msg ${isUser ? 'user-msg' : 'ai-msg'}`;
+  msg.innerHTML = text;
+  
+  if (suggestionId) {
+    const r = RESTAURANTS.find(x => x.id === suggestionId);
+    if (r) {
+      const card = document.createElement("div");
+      card.className = "chat-sugg-card";
+      card.onclick = () => { openModal(r.id); chatWindow.classList.add("hidden"); };
+      card.innerHTML = `
+        <div class="chat-sugg-icon">${r.emoji}</div>
+        <div class="chat-sugg-info">
+          <div class="chat-sugg-title">${r.name}</div>
+          <div class="chat-sugg-meta">${r.cat} a ${r.city} · ${r.avgPrice}</div>
+        </div>
+      `;
+      msg.appendChild(card);
+    }
+  }
+  
+  chatMsgs.appendChild(msg);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+}
+
+function handleAiResponse(query) {
+  const q = query.toLowerCase();
+  
+  // Basic semantic match
+  let matches = RESTAURANTS.filter(r => {
+    return r.name.toLowerCase().includes(q) || 
+           r.city.toLowerCase().includes(q) || 
+           r.cat.toLowerCase().includes(q) ||
+           r.desc.toLowerCase().includes(q);
+  });
+  
+  const mStr = JSON.stringify(RESTAURANTS).toLowerCase();
+  if (q.includes("pesce") || q.includes("mare")) {
+    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
+  }
+  if (q.includes("carne") || q.includes("bistecca") || q.includes("grigliata")) {
+    matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || JSON.stringify(r.menu).toLowerCase().includes("grigliata"));
+  }
+  if (q.includes("pizza") || q.includes("pizzeria")) {
+    matches = matches.filter(r => r.cat === "pizzeria" || JSON.stringify(r.menu).toLowerCase().includes("pizza"));
+  }
+
+  if (matches.length > 0) {
+    const top = matches[0];
+    addChatMsg(`Certamente! Ti suggerisco <strong>${top.name}</strong> a ${top.city}. Clicca qui sotto per vedere il menu completo!`, false, top.id);
+  } else {
+    // try random suggestion
+    const r = RESTAURANTS[Math.floor(Math.random()*RESTAURANTS.length)];
+    addChatMsg(`Hmm, non ho trovato corrispondenze esatte per questa ricerca, ma ti consiglio vivamente di provare <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
+  }
+}
+
+function processChat() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  addChatMsg(text, true);
+  chatInput.value = "";
+  
+  // Fake thinking delay
+  setTimeout(() => handleAiResponse(text), 600);
+}
+
+chatSend.addEventListener("click", processChat);
+chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") processChat(); });
