@@ -198,9 +198,22 @@ const chatInput = document.getElementById("chat-input-text");
 const chatSend = document.getElementById("chat-send-btn");
 const chatMsgs = document.getElementById("chatbot-messages");
 const chatTyping = document.getElementById("chat-typing");
+const chatOverlay = document.getElementById("chatbot-overlay");
 
-chatFab.addEventListener("click", () => { chatWindow.classList.remove("hidden"); chatInput.focus(); });
-chatClose.addEventListener("click", () => chatWindow.classList.add("hidden"));
+function openChat() {
+  chatOverlay.classList.remove("hidden");
+  chatWindow.classList.remove("hidden");
+  chatInput.focus();
+}
+
+function closeChat() {
+  chatOverlay.classList.add("hidden");
+  chatWindow.classList.add("hidden");
+}
+
+chatFab.addEventListener("click", openChat);
+chatClose.addEventListener("click", closeChat);
+chatOverlay.addEventListener("click", closeChat);
 
 // Used by the Quick Reply buttons in HTML
 window.sendQuickReply = function(text) {
@@ -261,6 +274,7 @@ function handleAiResponse(query) {
            r.desc.toLowerCase().includes(q);
   });
   
+  // Logica avanzata di match
   if (q.includes("pesce") || q.includes("mare") || q.includes("sushi")) {
     matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
   }
@@ -270,18 +284,32 @@ function handleAiResponse(query) {
   if (q.includes("pizza") || q.includes("pizzeria") || q.includes("margherita")) {
     matches = matches.filter(r => r.cat === "pizzeria" || JSON.stringify(r.menu).toLowerCase().includes("pizza"));
   }
+  
+  // Nuove logiche da Quick Replies
+  if (q.includes("economico") || q.includes("studenti")) {
+    matches = matches.filter(r => r.avgPrice.includes("10") || r.avgPrice.includes("15") || r.avgPrice.includes("20") || r.cat === 'pizzeria' || r.cat === 'bar');
+  }
+  if (q.includes("romantica") || q.includes("elegante") || q.includes("anniversario")) {
+    matches = matches.filter(r => r.cat === 'ristorante' && (r.stars === '★★★★★' || r.stars === '★★★★☆'));
+  }
+  if (q.includes("aperitivo") || q.includes("tapas") || q.includes("spritz")) {
+    matches = matches.filter(r => r.cat === 'bar' || JSON.stringify(r.menu).toLowerCase().includes("aperitivo") || JSON.stringify(r.menu).toLowerCase().includes("spritz"));
+  }
+
+  // Filtri città
   if (q.includes("roma")) matches = matches.filter(r => r.city.toLowerCase() === "roma");
   if (q.includes("napoli")) matches = matches.filter(r => r.city.toLowerCase() === "napoli");
   if (q.includes("milano")) matches = matches.filter(r => r.city.toLowerCase() === "milano");
+  if (q.includes("palermo")) matches = matches.filter(r => r.city.toLowerCase() === "palermo");
 
   if (matches.length > 0) {
-    // Pick the best match (first one) or shuffle
+    // Pick from top best
     const top = matches[Math.floor(Math.random() * Math.min(3, matches.length))]; 
-    addChatMsg(`Certamente! Ho trovato l'abbinamento perfetto. Ti suggerisco <strong>${top.name}</strong> a ${top.city}. Clicca la card qui sotto per esplorare il menu!`, false, top.id);
+    addChatMsg(`Ho trovato il posto perfetto per te! Guarda cosa propone <strong>${top.name}</strong> a ${top.city}. Clicca la card per il menu!`, false, top.id);
   } else {
     // try random suggestion
     const r = RESTAURANTS[Math.floor(Math.random()*RESTAURANTS.length)];
-    addChatMsg(`Hmm, ho guardato in cantina e in cucina ma non ho corrispondenze esatte per "${query}". Però ti consiglio vivamente di provare questo capolavoro: <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
+    addChatMsg(`Mmm... i miei database non segnalano una corrispondenza esattissima, ma fossi in te andrei sul sicuro qui: <strong>${r.name}</strong> a ${r.city}!`, false, r.id);
   }
 }
 
