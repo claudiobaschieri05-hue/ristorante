@@ -78,6 +78,7 @@ function renderCards(list) {
           <div>
             <div class="card-stars">${r.stars}</div>
             <div class="card-price">Medio: <strong>${r.avgPrice}</strong></div>
+            ${r.form_available ? (r.postiDisponibili > 0 ? `<div class="card-availability av-green">🟢 ${r.postiDisponibili} Posti disponibili</div>` : `<div class="card-availability av-red">🔴 Completo</div>`) : ''}
           </div>
           <button class="card-btn" onclick="openModal(${r.id})">Vedi Menu →</button>
         </div>
@@ -117,10 +118,18 @@ function openModal(id) {
       <div class="m-meta">
         <span class="m-meta-item">📍 ${r.address}</span>
         <span class="m-meta-item">📞 ${r.phone}</span>
+        <span class="m-meta-item">✉️ ${r.email}</span>
         <span class="m-meta-item">🕐 ${r.orari}</span>
         <span class="m-meta-item">${r.stars}</span>
         <span class="m-meta-item">💶 ${r.avgPrice}</span>
         ${r.website ? `<a href="${r.website}" target="_blank" class="m-meta-item website-link">🌐 SITO UFFICIALE</a>` : ''}
+        
+        ${r.form_available ? 
+          `<button class="m-book-action" onclick="openBooking(${r.id})" ${r.postiDisponibili <= 0 ? 'disabled' : ''}>
+             ${r.postiDisponibili > 0 ? '📅 PRENOTA UN TAVOLO' : '❌ ESAURITO'}
+           </button>` 
+        : ''}
+
       </div>
       <div class="m-desc">${r.desc}</div>
     </div>
@@ -331,3 +340,43 @@ function processChat() {
 
 chatSend.addEventListener("click", processChat);
 chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") processChat(); });
+
+// ── SISTEMA PRENOTAZIONI ──
+const bookModal = document.getElementById("bookModal");
+const bookClose = document.getElementById("bookClose");
+const bookForm = document.getElementById("bookForm");
+const bookRestName = document.getElementById("bookRestName");
+let currentBookingRestId = null;
+
+window.openBooking = function(id) {
+  const r = RESTAURANTS.find(x => x.id === id);
+  if (!r) return;
+  currentBookingRestId = r.id;
+  bookRestName.innerHTML = `Prenota da <strong>${r.name}</strong>`;
+  bookForm.reset();
+  bookModal.classList.remove("hidden");
+};
+
+bookClose.addEventListener("click", () => bookModal.classList.add("hidden"));
+
+bookForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const guests = parseInt(document.getElementById("bookGuests").value, 10);
+  
+  const r = RESTAURANTS.find(x => x.id === currentBookingRestId);
+  if (!r) return;
+
+  if (guests > r.postiDisponibili) {
+    alert(`Spiacenti, il locale ha a disposizione solo ${r.postiDisponibili} posti. Non possiamo accettare prenotazioni per ${guests} persone in questo orario.`);
+    return;
+  }
+
+  // Conferma
+  r.postiDisponibili -= guests;
+  alert(`Grazie! La tua richiesta di prenotazione da ${r.name} per ${guests} persone è stata inviata al ristorante via Email.`);
+  bookModal.classList.add("hidden");
+  
+  // Ricarica la vista modal e le cards per mostrare i posti scalati
+  openModal(r.id);
+  applyFilters();
+});
