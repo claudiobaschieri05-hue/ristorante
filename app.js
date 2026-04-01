@@ -220,6 +220,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCards(RESTAURANTS);
   initMap();
   document.getElementById("countRest").textContent = RESTAURANTS.length;
+  
+  // Setta la data di oggi per simulare l'aggiornamento
+  const oggi = new Date().toLocaleDateString("it-IT");
+  document.getElementById("last-update-bar").innerHTML = `🔄 Ultimo aggior. server: <strong>${oggi} 00:00</strong>`;
 });
 
 // ── AI CHATBOT VIRTUAL SOMMELIER ──
