@@ -6,10 +6,12 @@
   <title>Guida Ristoranti Italia 🍝 – Menu Interattivi</title>
   <meta name="description" content="Guida interattiva ai migliori ristoranti, osterie, pasticcerie e bar italiani con menu dettagliati, prezzi e mappa." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 
@@ -18,6 +20,40 @@
   <div>Questo sito è stato creato da <strong>Claudio Baschieri</strong></div>
   <div id="last-update-bar" style="font-size: .8rem; color: #a48c68; margin-top: 4px; font-weight: 500;">
     🔄 Verifica server in corso...
+  </div>
+</div>
+
+<!-- ===== MOBILE NAV OVERLAY ===== -->
+<div id="mobileNavOverlay" class="mobile-nav-overlay" aria-hidden="true">
+  <div class="mobile-nav-drawer">
+    <div class="mobile-nav-header">
+      <span class="logo-icon">🍝</span>
+      <strong>Guida Ristoranti</strong>
+      <button id="mobileNavClose" class="mobile-nav-close" aria-label="Chiudi menu">✕</button>
+    </div>
+    <div class="mobile-nav-search">
+      <input id="searchInputMobile" type="text" placeholder="Cerca ristorante o città…" />
+      <span>🔍</span>
+    </div>
+    <div class="mobile-nav-sort">
+      <label>Ordina per</label>
+      <select id="sortSelectMobile" class="sort-select-mobile">
+        <option value="default">🌟 Consigliati</option>
+        <option value="dist_asc">🚗 Vicini a me</option>
+        <option value="price_asc">💸 Più economici</option>
+        <option value="rating_desc">⭐ Top Recensioni</option>
+      </select>
+    </div>
+    <nav class="mobile-nav-filters">
+      <p class="mobile-nav-section-label">Categoria</p>
+      <button class="mobile-filter-btn active" data-cat="all">🍽️ Tutti</button>
+      <button class="mobile-filter-btn" data-cat="ristorante">🍴 Ristoranti</button>
+      <button class="mobile-filter-btn" data-cat="osteria">🍷 Osterie</button>
+      <button class="mobile-filter-btn" data-cat="pasticceria">🥐 Pasticcerie</button>
+      <button class="mobile-filter-btn" data-cat="bar">☕ Bar</button>
+      <button class="mobile-filter-btn" data-cat="pizzeria">🍕 Pizzerie</button>
+      <button class="mobile-filter-btn" data-cat="preferiti">❤️ Preferiti</button>
+    </nav>
   </div>
 </div>
 
@@ -31,17 +67,31 @@
         <p class="logo-sub">Menu interattivi · Prezzi reali · Oltre 30 locali</p>
       </div>
     </div>
-    <nav class="filters">
+    <nav class="filters desktop-filters">
       <button class="filter-btn active" data-cat="all">Tutti</button>
       <button class="filter-btn" data-cat="ristorante">🍴 Ristoranti</button>
       <button class="filter-btn" data-cat="osteria">🍷 Osterie</button>
       <button class="filter-btn" data-cat="pasticceria">🥐 Pasticcerie</button>
       <button class="filter-btn" data-cat="bar">☕ Bar</button>
       <button class="filter-btn" data-cat="pizzeria">🍕 Pizzerie</button>
+      <button class="filter-btn" data-cat="preferiti">❤️ Preferiti</button>
     </nav>
-    <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Cerca ristorante o città…" />
-      <span class="search-icon">🔍</span>
+    <div class="header-actions">
+      <select id="sortSelect" class="sort-select">
+        <option value="default">🌟 Consigliati</option>
+        <option value="dist_asc">🚗 Vicini a me</option>
+        <option value="price_asc">💸 Più economici</option>
+        <option value="rating_desc">⭐ Top Recensioni</option>
+      </select>
+      <button id="themeToggle" class="theme-toggle" aria-label="Cambia tema">🌙</button>
+      <div class="search-wrap">
+        <input id="searchInput" type="text" placeholder="Cerca ristorante o città…" />
+        <span class="search-icon">🔍</span>
+      </div>
+      <!-- Hamburger mobile -->
+      <button id="hamburgerBtn" class="hamburger-btn" aria-label="Apri menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
@@ -52,6 +102,13 @@
     <p class="hero-tag">🇮🇹 La vera cucina italiana</p>
     <h2 class="hero-title">Scopri i Sapori<br/><em>d'Italia</em></h2>
     <p class="hero-desc">Sfoglia i menu completi con antipasti, primi, secondi, dolci, vini, birre e bibite. Prezzi trasparenti, qualità garantita.</p>
+    <div id="weatherWidget" class="weather-widget hidden">
+      <span id="weatherIcon" class="weather-icon">🌤️</span>
+      <div class="weather-info">
+        <strong id="weatherCity">Reggio Emilia</strong>
+        <p id="weatherDesc">Oggi c'è il sole! Scopri i locali con Dehors all'aperto.</p>
+      </div>
+    </div>
     <div class="hero-stats">
       <div class="stat"><strong id="countRest">30+</strong><span>Ristoranti</span></div>
       <div class="stat"><strong>🇮🇹</strong><span>15 Città</span></div>
@@ -61,8 +118,13 @@
       Sfoglia i Locali ↓
     </button>
   </div>
+  <!-- Google Maps Hero -->
   <div class="hero-map-wrap">
-    <div id="map"></div>
+    <div class="hero-map-card">
+      <div class="hero-map-label">📍 Ristoranti nella tua zona</div>
+      <div id="heroMap"></div>
+      <div class="hero-map-hint">Clicca su un segnaposto per aprire il menu del locale</div>
+    </div>
   </div>
 </section>
 
@@ -72,6 +134,13 @@
     <h2>I Nostri Ristoranti</h2>
     <p>Clicca su un locale per aprire il menu completo</p>
   </div>
+  
+  <!-- Inizio Container Visti di Recente -->
+  <div id="recentContainer" class="recent-container hidden">
+    <h3>🕒 Visti di recente</h3>
+    <div id="recentGrid" class="recent-grid"></div>
+  </div>
+  <!-- Fine Container Visti di Recente -->
   <div class="cards-grid" id="cardsGrid"></div>
 </main>
 
@@ -176,7 +245,9 @@
   <p style="margin-top:6px;font-size:0.8rem;opacity:.6">© 2026 · Fatto con ❤️ in Italia</p>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container" class="toast-container"></div>
+
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>
