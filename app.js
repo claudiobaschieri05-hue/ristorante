@@ -2,59 +2,120 @@
    app.js – Guida Ristoranti d'Italia
    ================================================ */
 
+// ── GLOBALS & PREMIUM FEATURES ──
+const USER_LOC = { lat: 44.6989, lng: 10.6297 }; // Reggio Emilia
+let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
+}
+
+function toggleFavorite(event, id) {
+  event.stopPropagation();
+  if (favorites.includes(id)) {
+    favorites = favorites.filter(f => f !== id);
+    event.currentTarget.classList.remove('active');
+    showToast("Rimosso dai preferiti", "💔");
+  } else {
+    favorites.push(id);
+    event.currentTarget.classList.add('active');
+    showToast("Aggiunto ai preferiti!", "❤️");
+  }
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+  if (document.querySelector(".filter-btn.active")?.dataset.cat === "preferiti") applyFilters();
+}
+
+// ── TOAST NOTIFICATIONS ──
+function showToast(message, icon = "🔔") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
+
+// ── SHARE ──
+function shareRestaurant(id) {
+  const r = RESTAURANTS.find(x => x.id === id);
+  if (!r) return;
+  const dist = getDistance(USER_LOC.lat, USER_LOC.lng, r.lat, r.lng);
+  const text = `Scopri ${r.emoji} ${r.name} a ${r.city} (${dist} km di distanza)! Rating: ${r.rating}⭐.`;
+  if (navigator.share) {
+    navigator.share({ title: r.name, text: text, url: window.location.href }).catch(console.error);
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast("Testo copiato negli appunti!", "📋");
+  }
+}
+
 // ── TAB LABELS ──
 const TAB_LABELS = {
-  antipasti:  "🥗 Antipasti",
-  pizze:      "🍕 Pizze",
-  colazione:  "☕ Colazione",
-  cicchetti:  "🍢 Cicchetti",
-  panini:     "🥖 Panini",
-  aperitivo:  "🍸 Aperitivo",
-  gelati:     "🍦 Gelati",
-  granite:    "🧊 Granite",
+  antipasti: "🥗 Antipasti",
+  pizze: "🍕 Pizze",
+  colazione: "☕ Colazione",
+  cicchetti: "🍢 Cicchetti",
+  panini: "🥖 Panini",
+  aperitivo: "🍸 Aperitivo",
+  gelati: "🍦 Gelati",
+  granite: "🧊 Granite",
   cioccolato: "🍫 Cioccolato",
-  primi:      "🍝 Primi",
-  secondi:    "🍖 Secondi",
-  dolci:      "🍰 Dolci",
-  bevande:    "🥤 Bevande",
-  vini:       "🍷 Vini",
-  birre:      "🍺 Birre",
-  bibite:     "🥤 Bibite & Caffè",
+  primi: "🍝 Primi",
+  secondi: "🍖 Secondi",
+  dolci: "🍰 Dolci",
+  bevande: "🥤 Bevande",
+  vini: "🍷 Vini",
+  birre: "🍺 Birre",
+  bibite: "🥤 Bibite & Caffè",
 };
 
 // ── DRINK CLASSES ──
-const DRINK_CLASSES = { vini:"drink-wine", birre:"drink-beer", bibite:"drink-soft", bevande:"drink-soft" };
+const DRINK_CLASSES = { vini: "drink-wine", birre: "drink-beer", bibite: "drink-soft", bevande: "drink-soft" };
 
-// ── MAP INIT ──
-let map;
-const markers = [];
+// ── RECENT VISITS ──
+let recentVisits = JSON.parse(localStorage.getItem('recentVisits')) || [];
 
-function initMap() {
-  map = L.map("map", { zoomControl: true, scrollWheelZoom: false }).setView([42.4, 13.0], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap",
-    maxZoom: 18,
-  }).addTo(map);
+function addRecentVisit(id) {
+  if (recentVisits.includes(id)) {
+    recentVisits = recentVisits.filter(v => v !== id);
+  }
+  recentVisits.unshift(id);
+  if (recentVisits.length > 5) recentVisits.pop();
+  localStorage.setItem('recentVisits', JSON.stringify(recentVisits));
+  renderRecentVisits();
+}
 
-  RESTAURANTS.forEach(r => {
-    const icon = L.divIcon({
-      className: "",
-      html: `<div style="background:var(--gold,#c9933a);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;">${r.emoji}</div>`,
-      iconSize: [36, 36],
-      iconAnchor: [18, 36],
-      popupAnchor: [0, -38],
-    });
-
-    const marker = L.marker([r.lat, r.lng], { icon }).addTo(map);
-    marker.bindPopup(`
-      <div style="min-width:160px;">
-        <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#f0c060;">${r.emoji} ${r.name}</div>
-        <div style="font-size:.8rem;color:#9a8060;margin-top:2px;">📍 ${r.city}</div>
-        <div style="font-size:.8rem;color:#c4a878;margin-top:4px;">${r.stars} · ${r.avgPrice}</div>
-        <button onclick="openModal(${r.id})" style="margin-top:8px;background:#c9933a;color:#1a1208;border:none;border-radius:12px;padding:5px 14px;font-size:.8rem;font-weight:700;cursor:pointer;">Vedi Menu →</button>
-      </div>
-    `, { className: "map-popup" });
-    markers.push({ marker, restaurant: r });
+function renderRecentVisits() {
+  const container = document.getElementById("recentContainer");
+  const grid = document.getElementById("recentGrid");
+  if (!container || !grid) return;
+  if (recentVisits.length === 0) {
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+  grid.innerHTML = "";
+  recentVisits.forEach(id => {
+    const r = RESTAURANTS.find(x => x.id === id);
+    if (!r) return;
+    const item = document.createElement("div");
+    item.className = "recent-item";
+    item.innerHTML = `<span class="ri-emoji">${r.emoji}</span> <div class="ri-info"><strong>${r.name}</strong><span>${r.city}</span></div>`;
+    item.onclick = () => {
+      document.getElementById('restaurant-grid')?.scrollIntoView({ behavior: 'smooth' });
+      openModal(r.id);
+    };
+    grid.appendChild(item);
   });
 }
 
@@ -67,13 +128,44 @@ function renderCards(list) {
     card.className = "card";
     card.setAttribute("data-id", r.id);
     card.setAttribute("data-cat", r.cat);
+    // Novità: Distanza e Occupanza
+    const distance = getDistance(USER_LOC.lat, USER_LOC.lng, r.lat, r.lng);
+    const isFav = favorites.includes(r.id) ? 'active' : '';
+    let occClass = r.occupancy < 40 ? 'occ-low' : (r.occupancy < 75 ? 'occ-med' : 'occ-high');
+    let occText = r.occupancy < 40 ? 'Tranquillo' : (r.occupancy < 75 ? 'Normale' : 'Affollato');
+
     card.innerHTML = `
-      <div class="card-img">${r.emoji}</div>
+      <div class="card-img" style="background-image: url('${r.image}')">
+        <div class="card-top-badges">
+          <div class="card-dist">🚗 ${distance} km</div>
+          <button class="card-fav-btn ${isFav}" onclick="toggleFavorite(event, ${r.id})">❤️</button>
+        </div>
+        ${r.emoji}
+        ${r._matchedDish ? `<div class="card-badge-ribbon" style="background:#4caf50;">🔍 Trovato: ${r._matchedDish}</div>` : (r.badge ? `<div class="card-badge-ribbon">${r.badge}</div>` : '')}
+      </div>
       <div class="card-body">
         <span class="card-cat">${r.cat}</span>
         <div class="card-name">${r.name}</div>
         <div class="card-city">📍 ${r.city}</div>
+        <div class="card-tags">
+          ${r.atmosfera ? `<span class="card-tag atmo-tag">${r.atmosfera}</span>` : ''}
+          ${r.veganFriendly ? '<span class="card-tag vegan-tag">🌿 Vegan Friendly</span>' : ''}
+          ${r.glutenFree ? '<span class="card-tag gf-tag">🌾 Senza Glutine</span>' : ''}
+        </div>
         <div class="card-desc">${r.desc}</div>
+        <div class="occ-container">
+          <div class="occ-label"><span>Live Occupancy</span> <span>${occText} (${r.occupancy}%)</span></div>
+          <div class="occ-bar-bg">
+            <div class="occ-bar-fill ${occClass}" style="width: ${r.occupancy}%"></div>
+          </div>
+        </div>
+        <div class="card-servizi">
+          ${r.servizi?.dehor ? '<span class="serv-icon" title="Tavoli all\'aperto">🌤️</span>' : ''}
+          ${r.servizi?.parcheggio ? '<span class="serv-icon" title="Parcheggio">🅿️</span>' : ''}
+          ${r.servizi?.wiFi ? '<span class="serv-icon" title="WiFi gratuito">📶</span>' : ''}
+          ${r.servizi?.accessibileDisabili ? '<span class="serv-icon" title="Accessibile disabili">♿</span>' : ''}
+          ${r.servizi?.animaliAmmessi ? '<span class="serv-icon" title="Animali ammessi">🐾</span>' : ''}
+        </div>
         <div class="card-footer">
           <div>
             <div class="card-stars">${r.stars}</div>
@@ -93,24 +185,32 @@ function openModal(id) {
   const r = RESTAURANTS.find(x => x.id === id);
   if (!r) return;
 
+  addRecentVisit(r.id);
+
   const tabs = Object.keys(r.menu);
   const tabsHTML = tabs.map((k, i) =>
-    `<button class="menu-tab ${i===0?"active":""}" data-tab="${k}" onclick="switchTab('${k}',this)">${TAB_LABELS[k]||k}</button>`
+    `<button class="menu-tab ${i === 0 ? "active" : ""}" data-tab="${k}" onclick="switchTab('${k}',this)">${TAB_LABELS[k] || k}</button>`
   ).join("") + `<button class="menu-tab" data-tab="recensioni" onclick="switchTab('recensioni',this)">⭐ Recensioni</button>`;
 
   const panelsHTML = tabs.map((k, i) => {
     const dClass = DRINK_CLASSES[k] || "";
-    const items = r.menu[k].map(item => `
-      <div class="menu-item ${dClass}">
+    const items = r.menu[k].map(item => {
+      const isV = item.isVegan ? 'is-vegan' : '';
+      const isGF = item.isGF ? 'is-gf' : '';
+      const tagV = item.isVegan ? '<span style="font-size:0.75rem" title="Vegan Friendly">🌿</span>' : '';
+      const tagGF = item.isGF ? '<span style="font-size:0.75rem" title="Senza Glutine">🌾</span>' : '';
+      return `
+      <div class="menu-item ${dClass} ${isV} ${isGF}">
         <div class="mi-info">
-          <div class="mi-name">${item.name}</div>
+          <div class="mi-name">${item.name} ${tagV} ${tagGF}</div>
           ${item.desc ? `<div class="mi-desc">${item.desc}</div>` : ""}
         </div>
         <div class="mi-price">${item.price}</div>
-      </div>`).join("");
-    return `<div class="menu-panel ${i===0?"active":""}" id="panel-${k}">${items}</div>`;
+      </div>`;
+    }).join("");
+    return `<div class="menu-panel ${i === 0 ? "active" : ""}" id="panel-${k}">${items}</div>`;
   }).join("");
-  
+
   // Costruzione Pannello Recensioni
   const reviewsHTML = r.reviewsList ? r.reviewsList.map(rev => `
     <div class="review-card">
@@ -128,7 +228,11 @@ function openModal(id) {
 
   document.getElementById("modalContent").innerHTML = `
     <div class="m-header">
-      <div class="m-cat">${r.cat.toUpperCase()}</div>
+      <div class="m-top-row">
+        <div class="m-cat">${r.cat.toUpperCase()}</div>
+        ${r.badge ? `<div class="m-badge">${r.badge}</div>` : ''}
+        <button class="m-share-btn" onclick="shareRestaurant(${r.id})">📤 Condividi</button>
+      </div>
       <div class="m-name">${r.emoji} ${r.name}</div>
       <div class="m-meta">
         <span class="m-meta-item">📍 ${r.address}</span>
@@ -139,14 +243,38 @@ function openModal(id) {
         <span class="m-meta-item">💶 ${r.avgPrice}</span>
         ${r.website ? `<a href="${r.website}" target="_blank" class="m-meta-item website-link">🌐 SITO UFFICIALE</a>` : ''}
         
-        ${r.form_available ? 
-          `<button class="m-book-action" onclick="openBooking(${r.id})" ${r.postiDisponibili <= 0 ? 'disabled' : ''}>
+        ${r.form_available ?
+      `<button class="m-book-action" onclick="openBooking(${r.id})" ${r.postiDisponibili <= 0 ? 'disabled' : ''}>
              ${r.postiDisponibili > 0 ? '📅 PRENOTA UN TAVOLO' : '❌ ESAURITO'}
-           </button>` 
-        : ''}
+           </button>`
+      : ''}
 
       </div>
       <div class="m-desc">${r.desc}</div>
+      ${r.specialita && r.specialita.length ? `
+      <div class="m-specialita">
+        <div class="m-spec-label">🏅 Piatti Firma del Locale</div>
+        ${r.specialita.map(s => `<div class="m-spec-item">✦ ${s}</div>`).join('')}
+      </div>` : ''}
+      <div class="m-servizi-row">
+        ${r.atmosfera ? `<span class="m-tag m-atmo">${r.atmosfera}</span>` : ''}
+        ${r.veganFriendly ? '<span class="m-tag m-vegan">🌿 Vegan Friendly</span>' : ''}
+        ${r.glutenFree ? '<span class="m-tag m-gf">🌾 Senza Glutine</span>' : ''}
+        ${r.servizi?.dehor ? '<span class="m-tag m-serv">🌤️ Dehors</span>' : ''}
+        ${r.servizi?.parcheggio ? '<span class="m-tag m-serv">🅿️ Parcheggio</span>' : ''}
+        ${r.servizi?.wiFi ? '<span class="m-tag m-serv">📶 WiFi Gratuito</span>' : ''}
+        ${r.servizi?.accessibileDisabili ? '<span class="m-tag m-serv">♿ Accessibile</span>' : ''}
+        ${r.servizi?.animaliAmmessi ? '<span class="m-tag m-serv">🐾 Pet Friendly</span>' : ''}
+      </div>
+      <div class="m-map-embed">
+        <iframe width="100%" height="280" style="border:0; border-radius:12px; margin-top:20px;" loading="lazy" allowfullscreen 
+          src="https://maps.google.com/maps?q=${encodeURIComponent(r.name + ' ' + r.city)}&t=&z=15&ie=UTF8&iwloc=B&output=embed">
+        </iframe>
+      </div>
+    </div>
+    <div class="dietary-toggles">
+      <label class="dt-label"><input type="checkbox" id="dtVegan" onchange="toggleDietary()"> 🌿 Focus Vegan</label>
+      <label class="dt-label"><input type="checkbox" id="dtGF" onchange="toggleDietary()"> 🌾 Focus Senza Glutine</label>
     </div>
     <div class="menu-tabs">${tabsHTML}</div>
     <div class="menu-body">
@@ -162,9 +290,17 @@ function openModal(id) {
   const overlay = document.getElementById("modal");
   overlay.classList.add("open");
   document.body.style.overflow = "hidden";
+}
 
-  // fly map to restaurant
-  if (map) map.setView([r.lat, r.lng], 12);
+window.toggleDietary = function () {
+  const vChecked = document.getElementById("dtVegan").checked;
+  const gfChecked = document.getElementById("dtGF").checked;
+  document.querySelectorAll(".menu-item").forEach(item => {
+    let show = true;
+    if (vChecked && !item.classList.contains("is-vegan")) show = false;
+    if (gfChecked && !item.classList.contains("is-gf")) show = false;
+    item.style.display = show ? "flex" : "none";
+  });
 }
 
 function switchTab(key, btn) {
@@ -190,19 +326,38 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 function applyFilters() {
   const cat = document.querySelector(".filter-btn.active")?.dataset.cat || "all";
   const q = document.getElementById("searchInput").value.toLowerCase().trim();
-  const filtered = RESTAURANTS.filter(r => {
-    const matchCat = cat === "all" || r.cat === cat;
-    const matchQ = !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q);
+  const sort = document.getElementById("sortSelect")?.value || "default";
+
+  let filtered = RESTAURANTS.filter(r => {
+    const matchCat = cat === "all" || (cat === "preferiti" ? favorites.includes(r.id) : r.cat === cat);
+    let matchQ = !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q);
+
+    r._matchedDish = null;
+    if (!matchQ && q) {
+      for (const k in r.menu) {
+        for (const item of r.menu[k]) {
+          if (item.name.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q))) {
+            matchQ = true;
+            r._matchedDish = item.name;
+            break;
+          }
+        }
+        if (matchQ) break;
+      }
+    }
     return matchCat && matchQ;
   });
-  renderCards(filtered);
 
-  // update map markers visibility
-  markers.forEach(({ marker, restaurant: r }) => {
-    const show = filtered.some(f => f.id === r.id);
-    if (show) { if (!map.hasLayer(marker)) marker.addTo(map); }
-    else { map.removeLayer(marker); }
-  });
+  if (sort === "dist_asc") {
+    filtered.sort((a, b) => getDistance(USER_LOC.lat, USER_LOC.lng, a.lat, a.lng) - getDistance(USER_LOC.lat, USER_LOC.lng, b.lat, b.lng));
+  } else if (sort === "price_asc") {
+    const getP = str => parseInt(str.replace(/[^0-9]/g, '')) || 0;
+    filtered.sort((a, b) => getP(a.avgPrice) - getP(b.avgPrice));
+  } else if (sort === "rating_desc") {
+    filtered.sort((a, b) => b.rating - a.rating);
+  }
+
+  renderCards(filtered);
 }
 
 document.querySelectorAll(".filter-btn").forEach(btn => {
@@ -214,17 +369,214 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
 });
 
 document.getElementById("searchInput").addEventListener("input", applyFilters);
+document.getElementById("sortSelect")?.addEventListener("change", applyFilters);
 
 // ── INIT ──
+function initTheme() {
+  const themeToggle = document.getElementById("themeToggle");
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  themeToggle?.addEventListener("click", () => {
+    if (document.documentElement.getAttribute("data-theme") === "dark") {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+  });
+}
+
+function initWeather() {
+  const weatherTypes = [
+    { icon: "🌤️", desc: "Oggi c'è il sole! Scopri i locali con Dehors all'aperto." },
+    { icon: "🌧️", desc: "Giornata uggiosa. Rifugiati in un locale accogliente e caldo." },
+    { icon: "🌥️", desc: "Nuvoloso ma piacevole! Ottimo per una passeggiata in centro." }
+  ];
+  const w = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+  document.getElementById("weatherIcon").textContent = w.icon;
+  document.getElementById("weatherDesc").textContent = w.desc;
+  document.getElementById("weatherWidget").classList.remove("hidden");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initWeather();
+  setTimeout(() => showToast("Database sincronizzato: 500 locali agganciati", "🔄"), 800);
   renderCards(RESTAURANTS);
-  initMap();
+  renderRecentVisits();
   document.getElementById("countRest").textContent = RESTAURANTS.length;
-  
+
   // Setta la data di oggi per simulare l'aggiornamento
   const oggi = new Date().toLocaleDateString("it-IT");
   document.getElementById("last-update-bar").innerHTML = `🔄 Ultimo aggior. server: <strong>${oggi} 00:00</strong>`;
+
+  // ── HAMBURGER MENU ──
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const mobileNavOverlay = document.getElementById("mobileNavOverlay");
+  const mobileNavClose = document.getElementById("mobileNavClose");
+  const searchInputMobile = document.getElementById("searchInputMobile");
+  const sortSelectMobile = document.getElementById("sortSelectMobile");
+
+  function openMobileNav() {
+    mobileNavOverlay.classList.add("open");
+    mobileNavOverlay.setAttribute("aria-hidden", "false");
+    hamburgerBtn.classList.add("open");
+    hamburgerBtn.setAttribute("aria-expanded", "true");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeMobileNav() {
+    mobileNavOverlay.classList.remove("open");
+    mobileNavOverlay.setAttribute("aria-hidden", "true");
+    hamburgerBtn.classList.remove("open");
+    hamburgerBtn.setAttribute("aria-expanded", "false");
+    document.body.style.overflow = "";
+  }
+
+  hamburgerBtn?.addEventListener("click", openMobileNav);
+  mobileNavClose?.addEventListener("click", closeMobileNav);
+  mobileNavOverlay?.addEventListener("click", (e) => {
+    if (e.target === mobileNavOverlay) closeMobileNav();
+  });
+
+  // Sync mobile search → desktop search
+  searchInputMobile?.addEventListener("input", () => {
+    const desktopInput = document.getElementById("searchInput");
+    if (desktopInput) desktopInput.value = searchInputMobile.value;
+    applyFilters();
+  });
+
+  // Sync mobile sort → desktop sort
+  sortSelectMobile?.addEventListener("change", () => {
+    const desktopSort = document.getElementById("sortSelect");
+    if (desktopSort) desktopSort.value = sortSelectMobile.value;
+    applyFilters();
+  });
+
+  // Mobile filter buttons
+  document.querySelectorAll(".mobile-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".mobile-filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Sync desktop filter buttons
+      const cat = btn.dataset.cat;
+      document.querySelectorAll(".filter-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.cat === cat);
+      });
+
+      applyFilters();
+      closeMobileNav();
+    });
+  });
 });
+
+
+// ── MAPPA HERO – Leaflet + OpenStreetMap (gratuito, nessuna API key) ──
+function initHeroMap() {
+  const mapEl = document.getElementById("heroMap");
+  if (!mapEl || typeof L === "undefined") return;
+
+  // Centro su Reggio Emilia
+  const center = [44.6989, 10.6297];
+
+  const map = L.map("heroMap", {
+    center: center,
+    zoom: 12,
+    zoomControl: true,
+    scrollWheelZoom: false, // evita lo scroll accidentale
+    attributionControl: true,
+  });
+
+  // Tile layer chiaro (CartoDB Positron) – mappa bianca ed elegante
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: "abcd",
+    maxZoom: 19,
+  }).addTo(map);
+
+  // Marker "Tu sei qui" (punto blu pulsante)
+  const youIcon = L.divIcon({
+    className: "",
+    html: `<div style="
+      width:16px;height:16px;
+      background:#007aff;
+      border:3px solid #fff;
+      border-radius:50%;
+      box-shadow:0 0 0 6px rgba(0,122,255,0.25);
+    "></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+  L.marker(center, { icon: youIcon, zIndexOffset: 1000 })
+    .addTo(map)
+    .bindPopup("<strong style='font-family:Inter;'>📍 Tu sei qui</strong>");
+
+  // Colori per categoria
+  const catColors = {
+    ristorante: "#c9932e",
+    osteria: "#c0392b",
+    pizzeria: "#e65100",
+    pasticceria: "#ad1457",
+    bar: "#00897b",
+  };
+
+  // Mappa modale corrente per evitare duplicati
+  let openPopup = null;
+
+  // Aggiungi marker per ogni ristorante
+  if (typeof RESTAURANTS !== "undefined") {
+    RESTAURANTS.forEach(r => {
+      if (!r.lat || !r.lng) return;
+      const color = catColors[r.cat] || "#c9932e";
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="
+          width:36px;height:36px;
+          background:${color};
+          border:2px solid #fff;
+          border-radius:50%;
+          display:flex;align-items:center;justify-content:center;
+          font-size:16px;
+          box-shadow:0 3px 12px rgba(0,0,0,0.5);
+          cursor:pointer;
+          transition:transform .2s;
+        ">${r.emoji || "🍽"}</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -20],
+      });
+
+      const popup = L.popup({
+        maxWidth: 230,
+        className: "leaflet-custom-popup",
+      }).setContent(`
+        <div style="font-family:'Inter',sans-serif;padding:4px;">
+          <div style="font-size:1.05rem;font-weight:700;color:#1a1208;margin-bottom:4px;">${r.emoji} ${r.name}</div>
+          <div style="font-size:0.8rem;color:#6a4a2a;margin-bottom:2px;">📍 ${r.city}</div>
+          <div style="font-size:0.8rem;color:#6a4a2a;margin-bottom:8px;letter-spacing:1px;">${r.stars} &nbsp;·&nbsp; 💶 ${r.avgPrice}</div>
+          <button onclick="openModal(${r.id})" style="
+            background:#c9932e;color:#fff;border:none;border-radius:8px;
+            padding:7px 14px;font-size:0.82rem;font-weight:700;
+            cursor:pointer;width:100%;font-family:'Inter',sans-serif;
+          ">🍴 Vedi Menu</button>
+        </div>
+      `);
+
+      L.marker([r.lat, r.lng], { icon }).addTo(map).bindPopup(popup);
+    });
+  }
+
+  // Attiva lo scroll wheel solo quando l'utente fa click sulla mappa
+  mapEl.addEventListener("click", () => map.scrollWheelZoom.enable());
+  mapEl.addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
+}
+
+// Avvia la mappa quando il DOM è pronto
+document.addEventListener("DOMContentLoaded", initHeroMap);
 
 // ── AI CHATBOT VIRTUAL SOMMELIER ──
 const chatFab = document.getElementById("chatbot-fab");
@@ -252,7 +604,7 @@ chatClose.addEventListener("click", closeChat);
 chatOverlay.addEventListener("click", closeChat);
 
 // Used by the Quick Reply buttons in HTML
-window.sendQuickReply = function(text) {
+window.sendQuickReply = function (text) {
   chatInput.value = text;
   processChat();
 };
@@ -264,32 +616,32 @@ function scrollToBottom() {
 function addChatMsg(text, isUser, suggestionIds = null) {
   const row = document.createElement("div");
   row.className = `msg-row ${isUser ? 'user-row' : 'ai-row'}`;
-  
+
   const avatarHtml = isUser ? `<div class="msg-avatar">👤</div>` : `<div class="msg-avatar">🤖</div>`;
-  
+
   let msgContent = `<div class="msg ${isUser ? 'user-msg' : 'ai-msg'}">${text}</div>`;
-  
+
   if (isUser) {
     row.innerHTML = msgContent + avatarHtml;
   } else {
     row.innerHTML = avatarHtml + msgContent;
   }
-  
+
   const msgDiv = row.querySelector('.msg');
 
   if (suggestionIds && !isUser) {
     // Se è un array di id (Multi-card)
     let ids = Array.isArray(suggestionIds) ? suggestionIds : [suggestionIds];
-    
+
     ids.forEach(id => {
       const r = RESTAURANTS.find(x => x.id === id);
       if (r) {
         const card = document.createElement("div");
         card.className = "chat-sugg-card";
         card.onclick = () => { openModal(r.id); chatWindow.classList.add("hidden"); };
-        
+
         const ratingColor = parseFloat(r.rating) >= 4.5 ? '#2d8a39' : '#c9933a';
-        
+
         card.innerHTML = `
           <div class="chat-sugg-icon">${r.emoji}</div>
           <div class="chat-sugg-info">
@@ -304,18 +656,18 @@ function addChatMsg(text, isUser, suggestionIds = null) {
       }
     });
   }
-  
+
   chatMsgs.appendChild(row);
   scrollToBottom();
 }
 
 function handleAiResponse(query) {
-  chatTyping.classList.add("hidden"); 
-  
+  chatTyping.classList.add("hidden");
+
   const q = query.toLowerCase().trim();
-  
+
   const isVago = q.length < 5 || q === "ciao" || q.includes("ho fame") || q.includes("consigli") || q.includes("aiuto");
-  
+
   // Specific match: controlliamo se il nome base (es. "Sorbillo" ignorando "Napoli") è nella query
   const specificMatch = RESTAURANTS.find(r => {
     let baseName = r.name.toLowerCase().split(' ')[0];
@@ -356,14 +708,20 @@ function handleAiResponse(query) {
     matches = matches.filter(r => r.cat === "ristorante");
     hasFoodOrCatFilter = true;
   }
-  
-  // B) Filtri Cibo Specifico (se non ha matchato la categoria pura)
+
+  // B) Filtri Cibo Specifico e Lifestyle (se non ha matchato la categoria pura)
   if (!hasFoodOrCatFilter) {
     if (q.includes("pesce") || q.includes("mare") || q.includes("sushi")) {
       matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("pesce") || r.desc.toLowerCase().includes("mare") || JSON.stringify(r.menu).toLowerCase().includes("gamber"));
       hasFoodOrCatFilter = true;
     } else if (q.includes("carne") || q.includes("bistecca") || q.includes("grigliata")) {
       matches = matches.filter(r => JSON.stringify(r.menu).toLowerCase().includes("bistecca") || JSON.stringify(r.menu).toLowerCase().includes("carne") || r.desc.toLowerCase().includes("carne"));
+      hasFoodOrCatFilter = true;
+    } else if (q.includes("vegano") || q.includes("vegan") || q.includes("vegetariano")) {
+      matches = matches.filter(r => r.veganFriendly);
+      hasFoodOrCatFilter = true;
+    } else if (q.includes("celiaco") || q.includes("glutine") || q.includes("senza glutine")) {
+      matches = matches.filter(r => r.glutenFree);
       hasFoodOrCatFilter = true;
     }
   }
@@ -373,12 +731,30 @@ function handleAiResponse(query) {
     matches = matches.filter(r => r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
   }
 
-  // D) Modificatori Addizionali
+  // D) Modificatori Addizionali (applicati cumulativamente)
   if (q.includes("economico") || q.includes("studenti")) {
-    matches = matches.filter(r => parseInt(r.avgPrice.replace(/[^0-9]/g, '').substring(0,2)) <= 20 || r.cat === 'pizzeria' || r.cat === 'bar');
+    matches = matches.filter(r => parseInt(r.avgPrice.replace(/[^0-9]/g, '').substring(0, 2)) <= 20 || r.cat === 'pizzeria' || r.cat === 'bar');
   }
   if (q.includes("romantica") || q.includes("elegante") || q.includes("lusso") || q.includes("anniversario")) {
     matches = matches.filter(r => r.stars === '★★★★★' || r.stars === '★★★★☆');
+  }
+  if (q.includes("dehor") || q.includes("terrazza") || q.includes("esterno") || q.includes("all'aperto") || q.includes("aria aperta")) {
+    matches = matches.filter(r => r.servizi?.dehor);
+  }
+  if (q.includes("parcheggio") || q.includes("posteggio")) {
+    matches = matches.filter(r => r.servizi?.parcheggio);
+  }
+  if (q.includes("wifi") || q.includes("wi-fi") || q.includes("smartwork") || q.includes("smart work")) {
+    matches = matches.filter(r => r.servizi?.wiFi);
+  }
+  if (q.includes("animali") || q.includes("cane") || q.includes("pet friendly") || q.includes("portare il cane")) {
+    matches = matches.filter(r => r.servizi?.animaliAmmessi);
+  }
+  if (q.includes("michelin") || q.includes("stella michelin")) {
+    matches = matches.filter(r => r.badge && r.badge.toLowerCase().includes("michelin"));
+  }
+  if (q.includes("gambero rosso")) {
+    matches = matches.filter(r => r.badge && r.badge.toLowerCase().includes("gambero"));
   }
 
   // E) Estrazione automatica CITTÀ (Forza il match della città)
@@ -397,7 +773,7 @@ function handleAiResponse(query) {
       addChatMsg(`Perfetto, ho una scelta miratissima per te! Ecco <strong>${top.name}</strong> a ${top.city}.`, false, [top.id]);
     } else {
       // Prendi fino a 3 migliori (Ordinati per r.rating discendente simulato e presi a caso tra i top)
-      const scelti = matches.sort((a,b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 3);
+      const scelti = matches.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 3);
       const ids = scelti.map(r => r.id);
       addChatMsg(`Assolutamente! Ho trovato ${matches.length} locali incredibili. Ecco la mia <strong>Top ${ids.length}</strong> assoluta in base a quello che cerchi:`, false, ids);
     }
@@ -412,12 +788,12 @@ function processChat() {
   if (!text) return;
   addChatMsg(text, true);
   chatInput.value = "";
-  
+
   // Show typing indicator
   chatMsgs.appendChild(chatTyping); // move it to the bottom
   chatTyping.classList.remove("hidden");
   scrollToBottom();
-  
+
   // Fake thinking delay for realism
   const thinkingTime = Math.random() * 800 + 800; // 800-1600ms
   setTimeout(() => handleAiResponse(text), thinkingTime);
@@ -433,7 +809,7 @@ const bookForm = document.getElementById("bookForm");
 const bookRestName = document.getElementById("bookRestName");
 let currentBookingRestId = null;
 
-window.openBooking = function(id) {
+window.openBooking = function (id) {
   const r = RESTAURANTS.find(x => x.id === id);
   if (!r) return;
   currentBookingRestId = r.id;
@@ -447,20 +823,20 @@ bookClose.addEventListener("click", () => bookModal.classList.remove("open"));
 bookForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const guests = parseInt(document.getElementById("bookGuests").value, 10);
-  
+
   const r = RESTAURANTS.find(x => x.id === currentBookingRestId);
   if (!r) return;
 
   if (guests > r.postiDisponibili) {
-    alert(`Spiacenti, il locale ha a disposizione solo ${r.postiDisponibili} posti. Non possiamo accettare prenotazioni per ${guests} persone in questo orario.`);
+    showToast(`Spiacenti, il locale ha a disposizione solo ${r.postiDisponibili} posti in questo orario.`, "⚠️");
     return;
   }
 
   // Conferma
   r.postiDisponibili -= guests;
-  alert(`✔️ SUCCESS!\n\nLa richiesta per ${guests} persone è stata inviata a ${r.email}.\n\nIl Ristorante ${r.name} ti confermerà a breve il tavolo.`);
+  showToast(`La richiesta per ${guests} persone è stata inviata a ${r.name}.`, "✔️");
   bookModal.classList.remove("open");
-  
+
   // Ricarica la vista modal e le cards per mostrare i posti scalati
   openModal(r.id);
   applyFilters();
