@@ -27,7 +27,9 @@ const CITIES = [
   { name: "Perugia", lat: 43.1107, lng: 12.3908 },
   { name: "Pisa", lat: 43.7228, lng: 10.4017 },
   { name: "Ravenna", lat: 44.4184, lng: 12.1973 },
-  { name: "Como", lat: 45.8081, lng: 9.0852 }
+  { name: "Como", lat: 45.8081, lng: 9.0852 },
+  { name: "Reggio Emilia", lat: 44.6989, lng: 10.6297 },
+  { name: "Scandiano", lat: 44.5970, lng: 10.6881 }
 ];
 
 const TEMPLATES = {
@@ -100,6 +102,68 @@ const REVIEWS_POOL = {
   pasticceria: ["I loro cannoncini sono illegali, dolci pazzeschi!", "Torte moderne bellissime e buonissime. Ideale per compleanni.", "Il miglior cannolo siciliano mai mangiato al nord.", "Brioche enormi ripieni di pistacchio... un paradiso.", "Qualità artigianale altissima, prezzi onesti e locale profumatissimo."]
 };
 
+// ── SPECIALITÀ FIRMA per categoria ──
+const SPECIALITA_POOL = {
+  ristorante: [
+    "Risotto allo zafferano con ossobuco mantovano",
+    "Filetto di Chianina in crosta di tartufo nero",
+    "Polpo arrostito su crema di ceci e paprika affumicata",
+    "Tortelli ricotta e spinaci al burro nocciola e salvia",
+    "Tagliata di Chianina con rucola e grana padano 24 mesi",
+    "Astice blu al vapore con salsa agli agrumi e basilico",
+    "Petto d'anatra laccato al miele con purea di mele cotogne"
+  ],
+  osteria: [
+    "Tagliatelle al ragù di cinghiale stracotto 8 ore",
+    "Trippa alla parmigiana con polenta concia nel coccio",
+    "Carbonara tradizionale con guanciale croccante e pecorino DOP",
+    "Pappardelle ai funghi porcini trifolati e timo fresco",
+    "Spezzatino di vitello con gremolata e polenta gialla",
+    "Ribollita toscana con fagioli cannellini e cavolo nero",
+    "Abbacchio alla cacciatora con olive e rosmarino"
+  ],
+  pizzeria: [
+    "Pizza Margherita DOP con bufala campana e basilico fresco",
+    "Salsiccia e friarielli su base bianca con provola affumicata",
+    "Diavola con 'nduja calabrese e stracciatella di bufala",
+    "Pizza fritta classica napoletana con ricotta e cicoli",
+    "4 Formaggi con gorgonzola DOP e miele di castagno artigianale",
+    "Marinara autentica con aglio dell'Ufita e origano di Pantelleria"
+  ],
+  bar: [
+    "Spritz Aperol con tapas miste della casa",
+    "Negroni classico con Campari 1919 e gin Hendrick's",
+    "Tagliere aperitivo con DOP emiliani e focaccia cotta al momento",
+    "Cappuccino d'autore con latte art e brioche sfogliata",
+    "Cocktail della casa con distillati artigianali locali"
+  ],
+  pasticceria: [
+    "Cannolo siciliano con ricotta di pecora fresca e pistacchi di Bronte DOP",
+    "Vassoio mignon della casa – 10 varietà artigianali",
+    "Torta Sette Veli al cioccolato fondente 75% Valrhona",
+    "Monoporzione Tiramisù con savoiardo fatto in casa",
+    "Crostata di frolla bretone con crema al limone e lamponi freschi"
+  ]
+};
+
+// ── BADGE / RICONOSCIMENTI ──
+const BADGE_POOL = {
+  ristorante: ["⭐ Michelin 2024", "🌿 Bib Gourmand Michelin", "🍴 Gambero Rosso – 2 Forchette", "🏆 Identità Golose 2024", null, null, null, null],
+  osteria:    ["🐌 Osteria d'Italia Slow Food", "🍴 Gambero Rosso – 1 Forchetta", null, null, null, null],
+  pizzeria:   ["🍕 50 Top Pizza Italia 2024", "🌟 Verace Pizza Napoletana", null, null, null, null],
+  bar:        ["☕ Miglior Caffè – Gambero Rosso", null, null, null, null, null],
+  pasticceria:["🥐 Miglior Pasticceria – Gambero Rosso 2024", "🏆 Campione Italiano Arte Bianca", null, null, null, null]
+};
+
+// ── ATMOSFERA per categoria ──
+const ATMOSFERA_POOL = {
+  ristorante: ["Romantico", "Elegante", "Business", "Per famiglie", "Vista panoramica"],
+  osteria:    ["Conviviale", "Rustico", "Per famiglie", "Tradizionale", "Informale"],
+  pizzeria:   ["Informale", "Conviviale", "Per famiglie", "Alla moda", "Rumoroso e vivo"],
+  bar:        ["Alla moda", "Studentesco", "Business", "Rilassato", "Musicale"],
+  pasticceria:["Romantico", "Rilassato", "Per famiglie", "Elegante", "Tranquillo"]
+};
+
 function generate500Restaurants() {
   const result = [];
   let id = 1;
@@ -153,6 +217,41 @@ function generate500Restaurants() {
     let starsArr = ["★★★★☆", "★★★★★"];
     if (cat === "osteria" || cat === "bar") starsArr = ["★★★☆☆", "★★★★☆"];
 
+    // ── NUOVI CAMPI PREMIUM ──
+    // Specialità firma (2 piatti unici)
+    const specPool = SPECIALITA_POOL[cat];
+    const specialita = [...new Set([
+      specPool[Math.floor(Math.random() * specPool.length)],
+      specPool[Math.floor(Math.random() * specPool.length)],
+      specPool[Math.floor(Math.random() * specPool.length)]
+    ])].slice(0, 2);
+
+    // Badge / Riconoscimento
+    const badgeArr = BADGE_POOL[cat];
+    const badge = badgeArr[Math.floor(Math.random() * badgeArr.length)] || null;
+
+    // Atmosfera
+    const atmoArr = ATMOSFERA_POOL[cat];
+    const atmosfera = atmoArr[Math.floor(Math.random() * atmoArr.length)];
+
+    // Tag Lifestyle
+    const veganFriendly = cat === 'pasticceria' ? Math.random() > 0.45 :
+                          cat === 'bar'          ? Math.random() > 0.40 :
+                          Math.random() > 0.72;
+    const glutenFree = Math.random() > 0.48;
+
+    // Servizi e struttura
+    const servizi = {
+      dehor:               Math.random() > 0.42,
+      parcheggio:          Math.random() > 0.50,
+      wiFi:                cat === 'bar' ? Math.random() > 0.15 : Math.random() > 0.60,
+      accessibileDisabili: Math.random() > 0.38,
+      animaliAmmessi:      Math.random() > 0.52
+    };
+
+    const image = cat + "_bg.png";
+    const occupancy = Math.floor(Math.random() * 95) + 5; // da 5% a 100%
+
     let item = {
       id: id++,
       name: nome,
@@ -175,8 +274,30 @@ function generate500Restaurants() {
       reviewsCount: reviewsCount,
       topReview: topReview,
       reviewsList: recensioniReali,
+      specialita,
+      badge,
+      atmosfera,
+      veganFriendly,
+      glutenFree,
+      servizi,
+      image: image,
+      occupancy: occupancy,
       menu: JSON.parse(JSON.stringify(tpl.menu)) // clona il menu
     };
+
+    // Assegna proprietà dietetiche ai piatti random
+    for (let k in item.menu) {
+      if (k === 'vini' || k === 'birre' || k === 'bibite') {
+        item.menu[k].forEach(p => { p.isVegan = true; p.isGF = true; });
+      } else {
+        item.menu[k].forEach(p => {
+          let str = (p.name + p.desc).toLowerCase();
+          p.isVegan = !str.match(/manzo|pepe|pescato|astice|gamber|salsiccia|cinghiale|trippa|maiale|vitello|pollo|uovo|tuorlo|ricotta|bufala|provola|scampi|calamari|prosciutto|formaggi|ragù|salumi|lardo|burro|gorgonzola|fontina/);
+          p.isGF = !str.match(/toast|panino|tramezzino|piadina|crostini|bruschetta|pasta|linguine|pappardelle|ravioli|scomposto|pizza|montanara|cuoppo|bignè|brioche|frolla|savoiardo|cantucci/);
+        });
+      }
+    }
+
     result.push(item);
   }
   return result;
