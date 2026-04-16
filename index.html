@@ -235,9 +235,45 @@
 
   <div class="chatbot-input">
     <input type="text" id="chat-input-text" placeholder="Es. 'Pizzerie a Roma' o 'Pesce a Napoli'..." autocomplete="off">
+    <button id="chat-mic-btn" class="chat-mic-btn" title="Parla con il Sommelier">
+      <span class="material-icons-round">mic</span>
+    </button>
     <button id="chat-send-btn"><span class="material-icons-round">send</span></button>
   </div>
 </div>
+
+<!-- ===== GALLERY MODAL ===== -->
+<div class="modal-overlay" id="galleryModal" role="dialog" aria-modal="true" style="z-index: 10010;">
+  <div class="gallery-box">
+    <button class="modal-close" id="galleryClose" aria-label="Chiudi galleria">✕</button>
+    <div class="gallery-header">
+      <h2 id="galleryTitle">🖼️ Premium Gallery</h2>
+      <p id="gallerySubtitle">Galleria fotografica del locale</p>
+    </div>
+    <div id="galleryGrid" class="gallery-grid"></div>
+  </div>
+</div>
+
+<!-- ===== CART SIDEBAR ===== -->
+<div id="cartSidebar" class="cart-sidebar hidden">
+  <div class="cart-header">
+    <h3>🧾 Il Mio Ordine</h3>
+    <button id="cartClose" class="cart-close">✕</button>
+  </div>
+  <div id="cartItems" class="cart-items">
+    <p class="cart-empty">Nessun piatto aggiunto.<br>Clicca su un piatto del menu per aggiungerlo!</p>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total-row">
+      <span>Totale stimato</span>
+      <strong id="cartTotal">€ 0,00</strong>
+    </div>
+    <button class="cart-order-btn" onclick="checkoutCart()">📲 Invia Ordine</button>
+  </div>
+</div>
+<button id="cartFab" class="cart-fab hidden">
+  🛒 <span id="cartCount">0</span>
+</button>
 
 <!-- ===== FOOTER ===== -->
 <footer class="site-footer">
@@ -250,5 +286,6 @@
 
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="features_addon.js"></script>
 </body>
 </html>
