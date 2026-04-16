@@ -841,3 +841,264 @@ bookForm.addEventListener("submit", (e) => {
   openModal(r.id);
   applyFilters();
 });
+
+// ══════════════════════════════════════════════
+// FEATURE 1 – 🎤 VOICE INPUT (Web Speech API)
+// ══════════════════════════════════════════════
+(function initVoiceInput() {
+  const micBtn = document.getElementById("chat-mic-btn");
+  if (!micBtn) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.title = "Riconoscimento vocale non supportato dal browser";
+    micBtn.style.opacity = ".4";
+    micBtn.style.cursor = "not-allowed";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "it-IT";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  let isRecording = false;
+
+  micBtn.addEventListener("click", () => {
+    if (isRecording) {
+      recognition.stop();
+      return;
+    }
+    recognition.start();
+  });
+
+  recognition.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add("recording");
+    micBtn.querySelector(".material-icons-round").textContent = "mic_off";
+    micBtn.title = "Clicca per fermare";
+    showToast("🎤 Sto ascoltando… parla ora!", "🎙️");
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    const input = document.getElementById("chat-input-text");
+    if (input) {
+      input.value = transcript;
+      input.dispatchEvent(new Event("input"));
+      // Open chat if closed
+      const chatWindow = document.getElementById("chatbot-window");
+      if (chatWindow && chatWindow.classList.contains("hidden")) openChat();
+      // Auto-send after 600ms
+      setTimeout(() => processChat(), 600);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    showToast("Errore microfono: " + e.error, "❌");
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    micBtn.classList.remove("recording");
+    micBtn.querySelector(".material-icons-round").textContent = "mic";
+    micBtn.title = "Parla con il Sommelier";
+  };
+})();
+
+// ══════════════════════════════════════════════
+// FEATURE 2 – 🧾 CART / ORDER SIMULATOR
+// ══════════════════════════════════════════════
+let cart = []; // { id, name, price, qty, restId }
+
+function cartTotal() {
+  return cart.reduce((s, i) => s + i.price * i.qty, 0);
+}
+
+function renderCart() {
+  const itemsEl = document.getElementById("cartItems");
+  const totalEl = document.getElementById("cartTotal");
+  const countEl = document.getElementById("cartCount");
+  const fab = document.getElementById("cartFab");
+  if (!itemsEl) return;
+
+  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+  if (countEl) countEl.textContent = totalItems;
+  if (fab) fab.classList.toggle("hidden", totalItems === 0);
+
+  if (cart.length === 0) {
+    itemsEl.innerHTML = '<p class="cart-empty">Nessun piatto aggiunto.<br>Clicca su un piatto del menu per aggiungerlo!</p>';
+  } else {
+    itemsEl.innerHTML = cart.map((item, idx) => `
+      <div class="cart-item">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-qty">
+          <button onclick="changeQty(${idx}, -1)">−</button>
+          <span>${item.qty}</span>
+          <button onclick="changeQty(${idx}, 1)">+</button>
+        </div>
+        <div class="ci-price">€ ${(item.price * item.qty).toFixed(2)}</div>
+      </div>
+    `).join("");
+  }
+
+  if (totalEl) totalEl.textContent = "€ " + cartTotal().toFixed(2).replace(".", ",");
+}
+
+window.changeQty = function(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  renderCart();
+};
+
+window.addToCart = function(name, priceStr) {
+  const price = parseFloat(priceStr.replace("€", "").replace(",", ".").trim());
+  if (isNaN(price)) return;
+  const existing = cart.find(i => i.name === name);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ name, price, qty: 1 });
+  }
+  renderCart();
+  showToast(`"${name}" aggiunto al conto!`, "🛒");
+
+  // Show sidebar
+  const sidebar = document.getElementById("cartSidebar");
+  if (sidebar) sidebar.classList.remove("hidden");
+};
+
+window.checkoutCart = function() {
+  if (cart.length === 0) { showToast("Nessun piatto nel carrello!", "⚠️"); return; }
+  const total = cartTotal().toFixed(2);
+  showToast(`Ordine inviato! Totale: €${total}. Il locale ti contatterà a breve.`, "✅");
+  cart = [];
+  renderCart();
+  document.getElementById("cartSidebar")?.classList.add("hidden");
+};
+
+// Cart FAB toggle
+document.getElementById("cartFab")?.addEventListener("click", () => {
+  document.getElementById("cartSidebar")?.classList.toggle("hidden");
+});
+document.getElementById("cartClose")?.addEventListener("click", () => {
+  document.getElementById("cartSidebar")?.classList.add("hidden");
+});
+
+// Patch openModal to inject add-to-cart buttons in menu items
+const _origOpenModal = window.openModal || openModal;
+// Override: add "+" button to each menu item after modal renders
+const _origRenderModal = openModal;
+// We override the panelsHTML generation by patching renderMenuItems in openModal
+// via MutationObserver on modalContent
+const cartObserver = new MutationObserver(() => {
+  document.querySelectorAll(".menu-item").forEach(el => {
+    if (el.querySelector(".mi-add-btn")) return; // already has button
+    const nameEl = el.querySelector(".mi-name");
+    const priceEl = el.querySelector(".mi-price");
+    if (!nameEl || !priceEl) return;
+    const name = nameEl.textContent.replace(/[🌿🌾]/g, "").trim();
+    const price = priceEl.textContent.trim();
+    if (!price.includes("€")) return; // skip items without price
+
+    const btn = document.createElement("button");
+    btn.className = "mi-add-btn";
+    btn.textContent = "+ Aggiungi";
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      addToCart(name, price);
+      btn.classList.add("added");
+      btn.textContent = "✓ Aggiunto";
+      setTimeout(() => { btn.classList.remove("added"); btn.textContent = "+ Aggiungi"; }, 1800);
+    };
+    // Insert button after price
+    priceEl.parentElement.insertBefore(btn, priceEl.nextSibling);
+  });
+});
+const modalContent = document.getElementById("modalContent");
+if (modalContent) cartObserver.observe(modalContent, { childList: true, subtree: true });
+
+// ══════════════════════════════════════════════
+// FEATURE 3 – 🖼️ PREMIUM GALLERY (AI Images via Unsplash)
+// ══════════════════════════════════════════════
+// Use Unsplash Source (free, no API key) with food/restaurant keywords
+const GALLERY_KEYWORDS = {
+  ristorante: ["italian restaurant", "gourmet food plating", "fine dining italy", "risotto dish", "italian pasta"],
+  osteria: ["italian trattoria", "rustic italian food", "red wine pasta", "italian countryside", "tagliatelle ragu"],
+  pizzeria: ["pizza napoletana", "pizza margherita", "wood fired pizza", "pizza forno legna", "neapolitan pizza"],
+  bar: ["italian aperitivo", "spritz cocktail", "italian bar aperitif", "cicchetti veneziani", "negroni cocktail"],
+  pasticceria: ["italian pastry", "cannolo siciliano", "italian cakes desserts", "pasticceria italiana", "gelato"],
+};
+
+const GALLERY_LABELS = [
+  "Ambiente", "Specialità del giorno", "La nostra cucina", "Ingredienti freschi",
+  "Selezione vini", "Il tavolo degli ospiti", "Chef al lavoro", "Degustazione"
+];
+
+window.openGallery = function(restId) {
+  const r = RESTAURANTS.find(x => x.id === restId);
+  if (!r) return;
+
+  document.getElementById("galleryTitle").textContent = `🖼️ ${r.emoji} ${r.name}`;
+  document.getElementById("gallerySubtitle").textContent = `Premium Gallery — ${r.city}`;
+
+  const keywords = GALLERY_KEYWORDS[r.cat] || GALLERY_KEYWORDS.ristorante;
+  const grid = document.getElementById("galleryGrid");
+  grid.innerHTML = "";
+
+  // Generate 8 images
+  const seeds = [r.id * 7, r.id * 13, r.id * 17, r.id * 23, r.id * 31, r.id * 37, r.id * 41, r.id * 47];
+  const sizes = [[800, 800], [400, 400], [400, 400], [400, 400], [400, 400], [400, 400], [400, 400], [400, 400]];
+  seeds.forEach((seed, i) => {
+    const kw = encodeURIComponent(keywords[i % keywords.length]);
+    const [w, h] = sizes[i];
+    const wrap = document.createElement("div");
+    wrap.className = "gallery-img-wrap";
+    const img = document.createElement("img");
+    img.src = `https://source.unsplash.com/${w}x${h}/?${kw}&sig=${seed}`;
+    img.alt = GALLERY_LABELS[i % GALLERY_LABELS.length];
+    img.loading = "lazy";
+    const label = document.createElement("div");
+    label.className = "gallery-label";
+    label.textContent = GALLERY_LABELS[i % GALLERY_LABELS.length];
+    wrap.appendChild(img);
+    wrap.appendChild(label);
+    // Click to open full-size
+    wrap.onclick = () => window.open(img.src, "_blank");
+    grid.appendChild(wrap);
+  });
+
+  document.getElementById("galleryModal").classList.add("open");
+  document.body.style.overflow = "hidden";
+};
+
+document.getElementById("galleryClose")?.addEventListener("click", () => {
+  document.getElementById("galleryModal").classList.remove("open");
+  document.body.style.overflow = "";
+});
+document.getElementById("galleryModal")?.addEventListener("click", e => {
+  if (e.target === e.currentTarget) {
+    document.getElementById("galleryModal").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+});
+
+// Inject "Gallery" button into modal header when it opens
+const galleryObserver = new MutationObserver(() => {
+  const topRow = document.querySelector(".m-top-row");
+  if (topRow && !topRow.querySelector(".m-gallery-btn")) {
+    // find the current restaurant id from share button
+    const shareBtn = topRow.querySelector(".m-share-btn");
+    if (!shareBtn) return;
+    const shareOnclick = shareBtn.getAttribute("onclick") || "";
+    const match = shareOnclick.match(/\d+/);
+    if (!match) return;
+    const restId = parseInt(match[0]);
+    const gallBtn = document.createElement("button");
+    gallBtn.className = "m-gallery-btn";
+    gallBtn.innerHTML = `🖼️ Gallery`;
+    gallBtn.onclick = () => openGallery(restId);
+    topRow.appendChild(gallBtn);
+  }
+});
+if (modalContent) galleryObserver.observe(modalContent, { childList: true, subtree: false });
