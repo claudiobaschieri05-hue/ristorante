@@ -2817,3 +2817,71 @@ body {
 [data-theme="dark"] .ci-name { color: #f0d98c; }
 [data-theme="dark"] .cart-total-row { color: #f0d98c; }
 [data-theme="dark"] .ci-qty button { color: #f0d98c; background: rgba(201,147,58,.2); }
+
+/* VIP & Tasting Premium Styles */
+.vip-3d-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
+}
+.vip-shine {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay;
+}
+.tasting-item {
+  cursor: grab;
+  user-select: none;
+  transition: background 0.2s;
+}
+.tasting-item:active { cursor: grabbing; }
+
+
+/* ================================================================
+   MIDNIGHT MODE / NIGHT LOUNGE PALETTE
+   ================================================================ */
+[data-ambient='night-lounge'] {
+  --cream: #0a0e14;          /* Blu notte profondo */
+  --cream2: #121820;         /* Sfondo card scuro */
+  --dark: #e8b84b;           /* L'oro diventa il colore 'testo forte' */
+  --dark2: #161b22;          /* Elementi UI elevati */
+  --mid: #b89c74;
+  --text: #d1d5db;           /* Testo corpo chiaro */
+  --muted: #8b949e;
+  --white: #161b22;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  transition: background-color 1s ease, color 1s ease;
+}
+
+[data-ambient='night-lounge'] body {
+  background-image: radial-gradient(ellipse 80% 60% at 15% 40%, rgba(26, 32, 44, 0.4) 0%, transparent 60%);
+}
+
+[data-ambient='night-lounge'] .card, 
+[data-ambient='night-lounge'] .modal-box,
+[data-ambient='night-lounge'] .chatbot-window {
+  background: var(--dark2);
+  border: 1px solid rgba(232, 184, 75, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+[data-ambient='night-lounge'] .hero {
+  background-blend-mode: multiply;
+  background-color: #0a0e14; /* Scurisce drasticamente l'immagine di copertina */
+}
+
+[data-ambient='night-lounge'] .card-name, 
+[data-ambient='night-lounge'] .m-name {
+  color: var(--dark); /* Nomi in oro per massimo contrasto */
+  text-shadow: 0 2px 10px rgba(232, 184, 75, 0.1);
+}
+
+[data-ambient='night-lounge'] .menu-tabs {
+  background: var(--cream);
+  border-bottom-color: rgba(232, 184, 75, 0.15);
+}
+
+[data-ambient='night-lounge'] .menu-item {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+

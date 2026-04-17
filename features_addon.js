@@ -38,9 +38,9 @@
   function starInputHTML(name) {
     return `
       <div class="lr-star-row" data-name="${name}">
-        ${[1,2,3,4,5].map(i =>
-          `<span class="lr-star" data-val="${i}" role="button" aria-label="${i} stelle" tabindex="0">★</span>`
-        ).join('')}
+        ${[1, 2, 3, 4, 5].map(i =>
+      `<span class="lr-star" data-val="${i}" role="button" aria-label="${i} stelle" tabindex="0">★</span>`
+    ).join('')}
       </div>`;
   }
 
@@ -79,7 +79,7 @@
           <div class="lr-avg-info">
             <div class="lr-avg-stars">${renderStarsStr(parseFloat(displayRating))}</div>
             <div class="lr-avg-count">Basato su <strong>${totalCount}</strong> recensioni totali</div>
-            ${avg !== null ? `<div class="lr-user-avg">🏅 Media utenti: <strong>${avg}/5</strong> (${reviews.length} ${reviews.length===1?'utente':'utenti'})</div>` : ''}
+            ${avg !== null ? `<div class="lr-user-avg">🏅 Media utenti: <strong>${avg}/5</strong> (${reviews.length} ${reviews.length === 1 ? 'utente' : 'utenti'})</div>` : ''}
           </div>
         </div>
 
@@ -140,7 +140,7 @@
   }
 
   // Submit review
-  window.submitReview = function(restId) {
+  window.submitReview = function (restId) {
     const nameEl = document.getElementById(`lr-name-${restId}`);
     const textEl = document.getElementById(`lr-text-${restId}`);
     const starsRow = document.querySelector(`.lr-star-row[data-name="lr-stars-${restId}"]`);
@@ -175,7 +175,7 @@
 
   // Hook into openModal: inject review panel
   const _origOpenModal = window.openModal;
-  window.openModal = function(id) {
+  window.openModal = function (id) {
     _origOpenModal(id);
     // Wait for modal content to render
     setTimeout(() => {
@@ -219,14 +219,14 @@
           <p style="font-size:.85rem;color:var(--muted);">Apri il menu di un locale e clicca <strong>"Prenota un Tavolo"</strong>.</p>
         </div>`
       : bookings.map((b, idx) => {
-          const dt = new Date(b.datetime);
-          const isPast = dt < now;
-          const formattedDate = dt.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' });
-          const formattedTime = dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-          const statusClass = b.cancelled ? 'bd-status-cancelled' : (isPast ? 'bd-status-past' : 'bd-status-active');
-          const statusText = b.cancelled ? '❌ Annullata' : (isPast ? '✔️ Completata' : '🟢 Confermata');
+        const dt = new Date(b.datetime);
+        const isPast = dt < now;
+        const formattedDate = dt.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' });
+        const formattedTime = dt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        const statusClass = b.cancelled ? 'bd-status-cancelled' : (isPast ? 'bd-status-past' : 'bd-status-active');
+        const statusText = b.cancelled ? '❌ Annullata' : (isPast ? '✔️ Completata' : '🟢 Confermata');
 
-          return `
+        return `
             <div class="bd-booking-card ${b.cancelled ? 'bd-cancelled' : ''}">
               <div class="bd-booking-emoji">${b.emoji}</div>
               <div class="bd-booking-info">
@@ -245,7 +245,7 @@
                 🗑️ Annulla
               </button>` : ''}
             </div>`;
-        }).join('');
+      }).join('');
 
     return `
       <div class="bd-dashboard" id="bd-dashboard">
@@ -289,7 +289,7 @@
     document.body.style.overflow = '';
   }
 
-  window.cancelBooking = function(idx) {
+  window.cancelBooking = function (idx) {
     const bookings = getBookings();
     if (bookings[idx]) {
       bookings[idx].cancelled = true;
@@ -299,7 +299,7 @@
     }
   };
 
-  window.clearAllBookings = function() {
+  window.clearAllBookings = function () {
     if (!confirm('Vuoi eliminare tutto lo storico prenotazioni?')) return;
     saveBookings([]);
     document.getElementById('bdContent').innerHTML = buildDashboardHTML();
@@ -379,12 +379,12 @@
 (function initLoyaltyProgram() {
 
   const REWARDS = [
-    { id: 'menu3',      label: '3 Menu Aperti',       threshold: 3,  icon: '🍽️',  points: 50,  coupon: 'GUIDA10', discount: '–10%',  desc: 'Sconto del 10% al prossimo locale' },
-    { id: 'fav5',       label: '5 Preferiti',         threshold: 5,  icon: '❤️',  points: 75,  coupon: 'AMICI15', discount: '–15%',  desc: 'Frequentatore abituale: –15%' },
-    { id: 'review1',    label: '1ª Recensione',        threshold: 1,  icon: '✍️',  points: 100, coupon: 'CRITIC20',discount: '–20%',  desc: 'Critico gastronomico: –20%' },
-    { id: 'fav10',      label: '10 Preferiti',         threshold: 10, icon: '🏆',  points: 200, coupon: 'VIP25',   discount: '–25%',  desc: 'Buongustaio V.I.P.: –25%' },
-    { id: 'menu10',     label: '10 Menu Aperti',       threshold: 10, icon: '🌟',  points: 150, coupon: 'GOURMET20',discount: '–20%', desc: 'Esploratore: –20%' },
-    { id: 'review3',    label: '3 Recensioni',         threshold: 3,  icon: '📝',  points: 250, coupon: 'MASTER30',discount: '–30%',  desc: 'Maestro recensore: –30%' },
+    { id: 'menu3', label: '3 Menu Aperti', threshold: 3, icon: '🍽️', points: 50, coupon: 'GUIDA10', discount: '–10%', desc: 'Sconto del 10% al prossimo locale' },
+    { id: 'fav5', label: '5 Preferiti', threshold: 5, icon: '❤️', points: 75, coupon: 'AMICI15', discount: '–15%', desc: 'Frequentatore abituale: –15%' },
+    { id: 'review1', label: '1ª Recensione', threshold: 1, icon: '✍️', points: 100, coupon: 'CRITIC20', discount: '–20%', desc: 'Critico gastronomico: –20%' },
+    { id: 'fav10', label: '10 Preferiti', threshold: 10, icon: '🏆', points: 200, coupon: 'VIP25', discount: '–25%', desc: 'Buongustaio V.I.P.: –25%' },
+    { id: 'menu10', label: '10 Menu Aperti', threshold: 10, icon: '🌟', points: 150, coupon: 'GOURMET20', discount: '–20%', desc: 'Esploratore: –20%' },
+    { id: 'review3', label: '3 Recensioni', threshold: 3, icon: '📝', points: 250, coupon: 'MASTER30', discount: '–30%', desc: 'Maestro recensore: –30%' },
   ];
 
   function getActivity() {
@@ -440,7 +440,7 @@
   }
 
   // Track activity globally
-  window.trackActivity = function(type) {
+  window.trackActivity = function (type) {
     const activity = getActivity();
     if (type === 'menu') activity.menus = (activity.menus || 0) + 1;
     if (type === 'review') activity.reviews = (activity.reviews || 0) + 1;
@@ -451,14 +451,14 @@
 
   // Hook into openModal to track menu views
   const _origOpenModal2 = window.openModal;
-  window.openModal = function(id) {
+  window.openModal = function (id) {
     _origOpenModal2(id);
     trackActivity('menu');
   };
 
   // Hook into toggleFavorite to track favs
   const _origToggleFav = window.toggleFavorite;
-  window.toggleFavorite = function(event, id) {
+  window.toggleFavorite = function (event, id) {
     _origToggleFav(event, id);
     const activity = getActivity();
     checkAndUnlock(activity);
@@ -491,10 +491,10 @@
             <div class="lw-reward-label">${reward.label}</div>
             <div class="lw-reward-desc">${reward.desc}</div>
             ${isUnlocked
-              ? `<div class="lw-reward-coupon">🎟️ Codice: <strong>${reward.coupon}</strong> ${reward.discount} <button class="lw-copy-btn" onclick="navigator.clipboard.writeText('${reward.coupon}');showToast('Copiato!','📋')">📋</button></div>`
-              : `<div class="lw-progress-wrap"><div class="lw-progress-bar" style="width:${progress}%"></div></div>
+          ? `<div class="lw-reward-coupon">🎟️ Codice: <strong>${reward.coupon}</strong> ${reward.discount} <button class="lw-copy-btn" onclick="navigator.clipboard.writeText('${reward.coupon}');showToast('Copiato!','📋')">📋</button></div>`
+          : `<div class="lw-progress-wrap"><div class="lw-progress-bar" style="width:${progress}%"></div></div>
                  <div class="lw-progress-label">${current}/${reward.threshold}</div>`
-            }
+        }
           </div>
         </div>`;
     }).join('');
@@ -690,7 +690,7 @@
 
   // Hook into openModal
   const _origOpenModal3 = window.openModal;
-  window.openModal = function(id) {
+  window.openModal = function (id) {
     _origOpenModal3(id);
     setTimeout(() => injectDishPhotos(id), 120);
   };
